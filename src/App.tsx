@@ -1,41 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  ShoppingBag, 
-  ShieldCheck, 
-  Zap, 
-  UserCircle, 
-  ArrowRight, 
-  ArrowLeft,
-  CheckCircle2, 
-  Search, 
-  Sparkles,
-  Cpu,
-  Lock,
-  Globe,
   Menu,
   X,
-  CreditCard,
-  Target,
-  EyeOff,
-  Heart,
-  Coffee,
   Sun,
   Moon,
-  Camera,
-  Layers,
-  Terminal,
-  Database,
-  Activity,
-  Share2,
-  Phone,
-  Mail,
   ArrowUp,
   Github,
   Linkedin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-import mascot from './assets/3dmascot.png';
 
 type PageType = 'home' | 'sandbox' | 'contact';
 

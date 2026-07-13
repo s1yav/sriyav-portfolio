@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400;1,9..144,500&family=Inter:wght@400;700&family=Palette+Mosaic&family=Indie+Flower&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", serif;
+  --font-mono: "DM Mono", monospace;
+  --font-script: "Palette Mosaic", system-ui, sans-serif;
+  --font-editorial: "Cormorant Garamond", serif;
+  --font-hand: "Indie Flower", cursive;
+
+  /* O5O5 Signature Palette (Themeable) */
+  --color-o5-ink: var(--o5-ink);
+  --color-o5-dark: var(--o5-ink);
+  --color-o5-beige: var(--o5-beige);
+  --color-o5-paper: var(--o5-beige);
+  --halftone: radial-gradient(circle, currentColor 1px, transparent 1px);
+}
+
+@layer utilities {
+  .comic-bubble-tail {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 0);
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
+
+@layer base {
+  *, *::placeholder, input, textarea {
+    text-transform: uppercase !important;
+  }
+
+  :root {
+    --o5-ink: #000000;
+    --o5-ink-rgb: 0, 0, 0;
+    --o5-beige: #fcfaf7;
+  }
+
+  .dark {
+    --o5-ink: #fcfaf7;
+    --o5-ink-rgb: 252, 250, 247;
+    --o5-beige: #0a0a0a;
+  }
+
+  body {
+    @apply bg-o5-beige text-o5-ink antialiased overflow-x-hidden relative transition-colors duration-500;
+  }
+
+  ::selection {
+    background-color: var(--o5-ink) !important;
+    color: var(--o5-beige) !important;
+  }
+
+  body::before {
+    content: "";
+    @apply fixed inset-0 pointer-events-none z-[100] opacity-[0.03];
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-serif font-light tracking-[-0.04em] leading-[1.2];
+  }
+
+  /* Labels and Mono text */
+  .label-mono {
+    @apply font-mono text-[12px] uppercase tracking-[0.2em];
+  }
+}
+
+.editorial-container {
+  @apply max-w-[1800px] mx-auto px-8 md:px-16;
+}
+
+.lifestyle-grid {
+  @apply grid md:grid-cols-2 gap-4 p-4;
+}
+
+.lifestyle-card {
+  @apply aspect-square flex flex-col justify-end items-start p-16 md:p-20 relative overflow-hidden rounded-2xl;
+}
+
+.bask-button {
+  @apply px-10 py-4 rounded-full font-mono transition-all duration-500 text-[12px] tracking-[0.2em] uppercase inline-block text-center border border-transparent;
+}
+
+.bask-button-primary {
+  @apply bg-o5-ink text-o5-beige hover:bg-o5-beige hover:text-o5-ink border border-o5-ink;
+}
+
+.bask-button-white {
+  @apply bg-o5-beige text-o5-ink hover:bg-o5-ink hover:text-o5-beige border border-o5-ink;
+}
+
+.nav-link {
+  @apply font-mono text-[12px] font-bold uppercase tracking-[0.2em] text-o5-ink/40 hover:text-o5-ink transition-colors;
+}

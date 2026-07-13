@@ -45,124 +45,126 @@ const Navbar = ({
   return (
     <nav 
       id="main-nav" 
-      className="fixed top-0 left-0 right-0 z-50 bg-o5-beige py-6 border-b border-o5-ink/5"
+      className={`fixed top-0 left-0 right-0 transition-all duration-300 bg-o5-beige ${isOpen ? 'h-screen w-screen z-[99999]' : 'z-50 py-6 border-b border-o5-ink/5'}`}
     >
-      <div className="editorial-container relative">
-        {/* Desktop Layout: Fluid Grid */}
-        <div className="hidden md:grid grid-cols-3 items-center w-full">
-          {/* Left Column: Sub-page navigation links */}
-          <div className="flex justify-start items-center gap-[clamp(1rem,2vw,2.5rem)]">
-            <button 
-              id="desktop-nav-home"
-              onClick={() => handleNav('home')} 
-              className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'home' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
-            >
-              Home
-            </button>
-            <button 
-              id="desktop-nav-sandbox"
-              onClick={() => handleNav('sandbox')} 
-              className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'sandbox' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
-            >
-              Sandbox
-            </button>
-            <button 
-              id="desktop-nav-contact"
-              onClick={() => handleNav('contact')} 
-              className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'contact' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
-            >
-              Contact
-            </button>
+      {!isOpen && (
+        <div className="editorial-container relative">
+          {/* Desktop Layout: Fluid Grid */}
+          <div className="hidden md:grid grid-cols-3 items-center w-full">
+            {/* Left Column: Sub-page navigation links */}
+            <div className="flex justify-start items-center gap-[clamp(1rem,2vw,2.5rem)]">
+              <button 
+                id="desktop-nav-home"
+                onClick={() => handleNav('home')} 
+                className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'home' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
+              >
+                Home
+              </button>
+              <button 
+                id="desktop-nav-sandbox"
+                onClick={() => handleNav('sandbox')} 
+                className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'sandbox' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
+              >
+                Sandbox
+              </button>
+              <button 
+                id="desktop-nav-contact"
+                onClick={() => handleNav('contact')} 
+                className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'contact' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
+              >
+                Contact
+              </button>
+            </div>
+
+            {/* Center Column: Main Logo */}
+            <div className="flex justify-center items-center">
+              <button 
+                id="logo-desktop"
+                onClick={() => handleNav('home')} 
+                className="text-xl md:text-2xl font-serif tracking-[0.2em] font-light uppercase transition-colors duration-500 text-o5-ink hover:text-o5-ink/80 text-[clamp(1.1rem,1.8vw,1.5rem)] shrink-0"
+              >
+                <motion.span 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                >
+                  SRIYA V
+                </motion.span>
+              </button>
+            </div>
+
+            {/* Right Column: Actions */}
+            <div className="flex justify-end items-center gap-4">
+              <a 
+                id="github-header-desktop"
+                href="https://github.com/s1yav" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
+                aria-label="GitHub Profile"
+              >
+                <Github size={20} />
+              </a>
+              <a 
+                id="linkedin-header-desktop"
+                href="https://www.linkedin.com/in/sriyavenk/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
+                aria-label="LinkedIn Profile"
+              >
+                <Linkedin size={20} />
+              </a>
+              <button 
+                id="theme-toggle-desktop"
+                onClick={onToggleDarkMode}
+                className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </div>
           </div>
 
-          {/* Center Column: Main Logo */}
-          <div className="flex justify-center items-center">
-            <button 
-              id="logo-desktop"
-              onClick={() => handleNav('home')} 
-              className="text-xl md:text-2xl font-serif tracking-[0.2em] font-light uppercase transition-colors duration-500 text-o5-ink hover:text-o5-ink/80 text-[clamp(1.1rem,1.8vw,1.5rem)] shrink-0"
-            >
-              <motion.span 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+          {/* Mobile Layout: Balanced 3-column bar */}
+          <div className="grid grid-cols-3 items-center md:hidden w-full">
+            {/* Left: Menu Toggle Button */}
+            <div className="flex justify-start">
+              <button 
+                id="mobile-menu-toggle"
+                onClick={() => setIsOpen(!isOpen)}
+                className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
+                aria-label="Toggle navigation menu"
+              >
+                {isOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
+
+            {/* Center: Logo */}
+            <div className="flex justify-center">
+              <button 
+                id="logo-mobile"
+                onClick={() => handleNav('home')} 
+                className="text-lg font-serif tracking-[0.2em] font-light uppercase text-o5-ink hover:text-o5-ink/80 text-center"
               >
                 SRIYA V
-              </motion.span>
-            </button>
-          </div>
+              </button>
+            </div>
 
-          {/* Right Column: Actions */}
-          <div className="flex justify-end items-center gap-4">
-            <a 
-              id="github-header-desktop"
-              href="https://github.com/s1yav" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
-              aria-label="GitHub Profile"
-            >
-              <Github size={20} />
-            </a>
-            <a 
-              id="linkedin-header-desktop"
-              href="https://www.linkedin.com/in/sriyavenk/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
-              aria-label="LinkedIn Profile"
-            >
-              <Linkedin size={20} />
-            </a>
-            <button 
-              id="theme-toggle-desktop"
-              onClick={onToggleDarkMode}
-              className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            {/* Right: Fixed Day/Night Theme Toggle */}
+            <div className="flex justify-end">
+              <button 
+                id="theme-toggle-mobile"
+                onClick={onToggleDarkMode}
+                className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
+                aria-label="Toggle dark mode"
+              >
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Mobile Layout: Balanced 3-column bar */}
-        <div className="grid grid-cols-3 items-center md:hidden w-full">
-          {/* Left: Menu Toggle Button */}
-          <div className="flex justify-start">
-            <button 
-              id="mobile-menu-toggle"
-              onClick={() => setIsOpen(!isOpen)}
-              className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
-              aria-label="Toggle navigation menu"
-            >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-
-          {/* Center: Logo */}
-          <div className="flex justify-center">
-            <button 
-              id="logo-mobile"
-              onClick={() => handleNav('home')} 
-              className="text-lg font-serif tracking-[0.2em] font-light uppercase text-o5-ink hover:text-o5-ink/80 text-center"
-            >
-              SRIYA V
-            </button>
-          </div>
-
-          {/* Right: Fixed Day/Night Theme Toggle */}
-          <div className="flex justify-end">
-            <button 
-              id="theme-toggle-mobile"
-              onClick={onToggleDarkMode}
-              className="p-2 transition-colors text-o5-ink hover:text-o5-ink/60"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Mobile Drawer/Disclosure Menu - Minimal Fullscreen Overlay */}
       <AnimatePresence>
@@ -176,11 +178,14 @@ const Navbar = ({
             className="md:hidden fixed inset-0 z-[99999] w-full h-screen bg-o5-beige flex flex-col justify-between py-12 px-8"
           >
             {/* Top Close Button (Top Right Corner with adequate padding) */}
-            <div className="flex justify-end w-full">
+            <div className="flex justify-end w-full relative z-[100000]">
               <button 
                 id="mobile-menu-close"
-                onClick={() => setIsOpen(false)}
-                className="p-3 transition-colors text-o5-ink hover:text-o5-ink/60 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                }}
+                className="p-3 transition-colors text-o5-ink hover:text-o5-ink/60 cursor-pointer relative z-[100001] pointer-events-auto"
                 aria-label="Close navigation menu"
               >
                 <X size={32} />
@@ -258,7 +263,7 @@ const HomePage = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl md:text-6xl mb-8 font-serif leading-tight tracking-tight max-w-5xl mx-auto text-o5-ink font-light"
+            className="text-2xl md:text-4xl mb-8 font-serif leading-tight tracking-tight max-w-5xl mx-auto text-o5-ink font-light"
           >
             A journal to track my trajectory within computer science
           </motion.h1>

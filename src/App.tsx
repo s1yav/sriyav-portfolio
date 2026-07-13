@@ -489,104 +489,112 @@ const SandboxPage = () => {
       transition={{ duration: 0.6 }}
       className="pt-40 pb-20 min-h-screen"
     >
-      <div className="editorial-container">
-        <div className="grid lg:grid-cols-12 gap-12 items-start">
-          {/* Controls Panel */}
-          <div className="lg:col-span-4 space-y-8 bg-o5-ink/5 border border-o5-ink/5 p-8 rounded-2xl text-left">
-            <h3 className="text-xl font-serif text-o5-ink mb-4">Physics Adjustments</h3>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="flex justify-between text-xs font-mono uppercase tracking-widest mb-2 text-o5-ink/60">
-                  <span>Particle Count</span>
-                  <span className="font-bold">{particleCount}</span>
-                </label>
-                <input 
-                  type="range" 
-                  min="30" 
-                  max="250" 
-                  value={particleCount}
-                  onChange={(e) => setParticleCount(Number(e.target.value))}
-                  className="w-full accent-o5-ink bg-o5-ink/10 h-1 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
+      {/* Completely blank sandbox page on display */}
+      <div className="editorial-container min-h-[50vh]">
+        {/* Intentionally left blank */}
+      </div>
 
-              <div>
-                <label className="flex justify-between text-xs font-mono uppercase tracking-widest mb-2 text-o5-ink/60">
-                  <span>Attraction Gravity</span>
-                  <span className="font-bold">{gravity}</span>
-                </label>
-                <input 
-                  type="range" 
-                  min="0.1" 
-                  max="1.5" 
-                  step="0.05"
-                  value={gravity}
-                  onChange={(e) => setGravity(Number(e.target.value))}
-                  className="w-full accent-o5-ink bg-o5-ink/10 h-1 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
+      {/* Preserve the physics adjustments code but do not display it on the sandbox page */}
+      <div className="hidden" aria-hidden="true">
+        <div className="editorial-container">
+          <div className="grid lg:grid-cols-12 gap-12 items-start">
+            {/* Controls Panel */}
+            <div className="lg:col-span-4 space-y-8 bg-o5-ink/5 border border-o5-ink/5 p-8 rounded-2xl text-left">
+              <h3 className="text-xl font-serif text-o5-ink mb-4">Physics Adjustments</h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="flex justify-between text-xs font-mono uppercase tracking-widest mb-2 text-o5-ink/60">
+                    <span>Particle Count</span>
+                    <span className="font-bold">{particleCount}</span>
+                  </label>
+                  <input 
+                    type="range" 
+                    min="30" 
+                    max="250" 
+                    value={particleCount}
+                    onChange={(e) => setParticleCount(Number(e.target.value))}
+                    className="w-full accent-o5-ink bg-o5-ink/10 h-1 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
 
-              <div>
-                <label className="flex justify-between text-xs font-mono uppercase tracking-widest mb-2 text-o5-ink/60">
-                  <span>Inherent Velocity</span>
-                  <span className="font-bold">{speed}x</span>
-                </label>
-                <input 
-                  type="range" 
-                  min="0.5" 
-                  max="4" 
-                  step="0.1"
-                  value={speed}
-                  onChange={(e) => setSpeed(Number(e.target.value))}
-                  className="w-full accent-o5-ink bg-o5-ink/10 h-1 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
+                <div>
+                  <label className="flex justify-between text-xs font-mono uppercase tracking-widest mb-2 text-o5-ink/60">
+                    <span>Attraction Gravity</span>
+                    <span className="font-bold">{gravity}</span>
+                  </label>
+                  <input 
+                    type="range" 
+                    min="0.1" 
+                    max="1.5" 
+                    step="0.05"
+                    value={gravity}
+                    onChange={(e) => setGravity(Number(e.target.value))}
+                    className="w-full accent-o5-ink bg-o5-ink/10 h-1 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
 
-              <div>
-                <span className="block text-xs font-mono uppercase tracking-widest mb-3 text-o5-ink/60">Palette Select</span>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['slate', 'cyber', 'aurora'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setColorMode(mode)}
-                      className={`py-2 rounded font-mono text-[10px] uppercase tracking-wider transition-all border ${
-                        colorMode === mode 
-                          ? 'bg-o5-ink text-o5-beige border-o5-ink' 
-                          : 'border-o5-ink/10 hover:border-o5-ink/40 text-o5-ink bg-transparent'
-                      }`}
-                    >
-                      {mode}
-                    </button>
-                  ))}
+                <div>
+                  <label className="flex justify-between text-xs font-mono uppercase tracking-widest mb-2 text-o5-ink/60">
+                    <span>Inherent Velocity</span>
+                    <span className="font-bold">{speed}x</span>
+                  </label>
+                  <input 
+                    type="range" 
+                    min="0.5" 
+                    max="4" 
+                    step="0.1"
+                    value={speed}
+                    onChange={(e) => setSpeed(Number(e.target.value))}
+                    className="w-full accent-o5-ink bg-o5-ink/10 h-1 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <span className="block text-xs font-mono uppercase tracking-widest mb-3 text-o5-ink/60">Palette Select</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['slate', 'cyber', 'aurora'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setColorMode(mode)}
+                        className={`py-2 rounded font-mono text-[10px] uppercase tracking-wider transition-all border ${
+                          colorMode === mode 
+                            ? 'bg-o5-ink text-o5-beige border-o5-ink' 
+                            : 'border-o5-ink/10 hover:border-o5-ink/40 text-o5-ink bg-transparent'
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-6 border-t border-o5-ink/10">
-              <h4 className="font-mono text-xs uppercase tracking-widest text-o5-ink/60 mb-2">Sim details</h4>
-              <p className="text-sm font-serif text-o5-ink/50 leading-relaxed">
-                Particles are updated dynamically frame-by-frame on the main event thread, using mathematical vector algebra to compute local attractors within a 250px radius. Linear graph connections are computed conditionally when topological Euclidean distance drops below 60 pixels.
-              </p>
-            </div>
-          </div>
-
-          {/* Interactive Canvas */}
-          <div className="lg:col-span-8 bg-o5-beige border border-o5-ink/10 rounded-2xl overflow-hidden relative shadow-inner">
-            <canvas 
-              ref={canvasRef}
-              onMouseMove={handleMouseMove}
-              onMouseEnter={() => setIsMouseIn(true)}
-              onMouseLeave={() => setIsMouseIn(false)}
-              className="w-full h-[500px] block cursor-crosshair bg-transparent"
-            />
-            {!isMouseIn && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-o5-beige/40 backdrop-blur-[1px] transition-all duration-500">
-                <span className="font-mono text-xs uppercase tracking-[0.25em] text-o5-ink/40 bg-o5-beige px-6 py-3 rounded-full border border-o5-ink/5 shadow-md">
-                  Hover to distort field
-                </span>
+              <div className="pt-6 border-t border-o5-ink/10">
+                <h4 className="font-mono text-xs uppercase tracking-widest text-o5-ink/60 mb-2">Sim details</h4>
+                <p className="text-sm font-serif text-o5-ink/50 leading-relaxed">
+                  Particles are updated dynamically frame-by-frame on the main event thread, using mathematical vector algebra to compute local attractors within a 250px radius. Linear graph connections are computed conditionally when topological Euclidean distance drops below 60 pixels.
+                </p>
               </div>
-            )}
+            </div>
+
+            {/* Interactive Canvas */}
+            <div className="lg:col-span-8 bg-o5-beige border border-o5-ink/10 rounded-2xl overflow-hidden relative shadow-inner">
+              <canvas 
+                ref={canvasRef}
+                onMouseMove={handleMouseMove}
+                onMouseEnter={() => setIsMouseIn(true)}
+                onMouseLeave={() => setIsMouseIn(false)}
+                className="w-full h-[500px] block cursor-crosshair bg-transparent"
+              />
+              {!isMouseIn && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-o5-beige/40 backdrop-blur-[1px] transition-all duration-500">
+                  <span className="font-mono text-xs uppercase tracking-[0.25em] text-o5-ink/40 bg-o5-beige px-6 py-3 rounded-full border border-o5-ink/5 shadow-md">
+                    Hover to distort field
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

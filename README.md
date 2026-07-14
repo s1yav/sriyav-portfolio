@@ -1,1 +1,1 @@
-A journal to track my trajectory within computer science
+Repository for my personal website/portfolio.

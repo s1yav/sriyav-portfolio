@@ -263,7 +263,7 @@ const HomePage = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-2xl md:text-4xl mb-8 font-serif leading-tight tracking-tight max-w-5xl mx-auto text-o5-ink font-light"
+            className="text-xl md:text-3xl mb-8 font-serif leading-tight tracking-tight max-w-5xl mx-auto text-o5-ink font-light"
           >
             A journal to track my trajectory within computer science
           </motion.h1>
@@ -772,6 +772,12 @@ const Footer = ({ onNavigate }: { onNavigate: (page: PageType) => void }) => {
             <Linkedin size={48} />
           </a>
         </div>
+
+        <p className="max-w-2xl font-mono text-[8px] uppercase tracking-[0.2em] leading-relaxed text-o5-ink/40 px-4 mt-12 text-center">
+          NOTHING IN LIFE IS TO BE FEARED, IT IS ONLY TO BE UNDERSTOOD.<br />
+          NOW IS THE TIME TO UNDERSTAND MORE SO THAT WE MAY FEAR LESS.<br />
+          — MARIE CURIE
+        </p>
       </div>
     </footer>
   );

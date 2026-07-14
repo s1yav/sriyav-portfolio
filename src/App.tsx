@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-type PageType = 'home' | 'sandbox' | 'contact';
+type PageType = 'home' | 'workspace' | 'contact';
 
 const Navbar = ({ 
   currentPage, 
@@ -61,11 +61,11 @@ const Navbar = ({
                 Home
               </button>
               <button 
-                id="desktop-nav-sandbox"
-                onClick={() => handleNav('sandbox')} 
-                className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'sandbox' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
+                id="desktop-nav-workspace"
+                onClick={() => handleNav('workspace')} 
+                className={`nav-link text-[clamp(0.75rem,1.1vw,0.875rem)] uppercase tracking-wider ${currentPage === 'workspace' ? 'text-o5-ink font-bold border-b border-o5-ink/20' : 'text-o5-ink/40'} hover:text-o5-ink pb-1 transition-colors duration-300`}
               >
-                Sandbox
+                Workspace
               </button>
               <button 
                 id="desktop-nav-contact"
@@ -202,11 +202,11 @@ const Navbar = ({
                 Home
               </button>
               <button 
-                id="mobile-nav-sandbox"
-                onClick={() => handleNav('sandbox')} 
-                className={`text-3xl uppercase tracking-widest font-serif transition-all duration-300 ${currentPage === 'sandbox' ? 'text-o5-ink font-bold scale-105' : 'text-o5-ink/50 hover:text-o5-ink'}`}
+                id="mobile-nav-workspace"
+                onClick={() => handleNav('workspace')} 
+                className={`text-3xl uppercase tracking-widest font-serif transition-all duration-300 ${currentPage === 'workspace' ? 'text-o5-ink font-bold scale-105' : 'text-o5-ink/50 hover:text-o5-ink'}`}
               >
-                Sandbox
+                Workspace
               </button>
               <button 
                 id="mobile-nav-contact"
@@ -247,7 +247,7 @@ const Navbar = ({
   );
 };
 
-const HomePage = () => {
+const HomePage = ({ onNavigate }: { onNavigate: (page: PageType) => void; key?: string }) => {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -267,6 +267,21 @@ const HomePage = () => {
           >
             A journal to track my trajectory within computer science
           </motion.h1>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-6"
+          >
+            <button
+              onClick={() => onNavigate('workspace')}
+              className="group inline-flex items-center gap-2 font-mono text-xs tracking-[0.2em] text-o5-ink/60 hover:text-o5-ink transition-colors duration-300 cursor-pointer"
+            >
+              Open Workspace <span className="inline-block transition-transform duration-300 group-hover:translate-x-2">→</span>
+            </button>
+          </motion.div>
         </div>
       </section>
     </motion.div>
@@ -275,7 +290,7 @@ const HomePage = () => {
 
 
 
-const SandboxPage = () => {
+const WorkspacePage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [particleCount, setParticleCount] = useState(120);
   const [gravity, setGravity] = useState(0.4);
@@ -489,12 +504,12 @@ const SandboxPage = () => {
       transition={{ duration: 0.6 }}
       className="pt-40 pb-20 min-h-screen"
     >
-      {/* Completely blank sandbox page on display */}
+      {/* Completely blank workspace page on display */}
       <div className="editorial-container min-h-[50vh]">
         {/* Intentionally left blank */}
       </div>
 
-      {/* Preserve the physics adjustments code but do not display it on the sandbox page */}
+      {/* Preserve the physics adjustments code but do not display it on the workspace page */}
       <div className="hidden" aria-hidden="true">
         <div className="editorial-container">
           <div className="grid lg:grid-cols-12 gap-12 items-start">
@@ -748,7 +763,7 @@ const Footer = ({ onNavigate }: { onNavigate: (page: PageType) => void }) => {
       <div className="flex flex-col items-center gap-8">
         <div className="flex flex-wrap justify-center gap-8 label-mono">
           <button onClick={() => onNavigate('home')} className="hover:text-o5-ink transition-colors uppercase">Home</button>
-          <button onClick={() => onNavigate('sandbox')} className="hover:text-o5-ink transition-colors uppercase">Sandbox</button>
+          <button onClick={() => onNavigate('workspace')} className="hover:text-o5-ink transition-colors uppercase">Workspace</button>
           <button onClick={() => onNavigate('contact')} className="hover:text-o5-ink transition-colors uppercase">Contact</button>
         </div>
         
@@ -862,10 +877,10 @@ export default function App() {
       <main className="relative z-10">
         <AnimatePresence mode="wait">
           {currentPage === 'home' && (
-            <HomePage key="home" />
+            <HomePage key="home" onNavigate={handleNavigate} />
           )}
-          {currentPage === 'sandbox' && (
-            <SandboxPage key="sandbox" />
+          {currentPage === 'workspace' && (
+            <WorkspacePage key="workspace" />
           )}
           {currentPage === 'contact' && (
             <ContactPage key="contact" />

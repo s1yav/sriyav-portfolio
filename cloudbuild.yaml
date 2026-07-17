@@ -4,14 +4,14 @@ steps:
     args:
       - 'build'
       - '-t'
-      - '$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REGISTRY_NAME/sriyav-portfolio:$COMMIT_SHA'
+      - '$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACTREGISTRY_NAME/sriyav-portfolio:$COMMIT_SHA'
       - '.'
     env:
       - 'DOCKER_BUILDKIT=1'
 
 # Push the built image to GCP Artifact Registry
 images:
-  - '$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACT_REGISTRY_NAME/sriyav-portfolio:$COMMIT_SHA'
+  - '$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACTREGISTRY_NAME/sriyav-portfolio:$COMMIT_SHA'
 
 options:
   # Log directly to Google Cloud Logging to avoid dependencies on GCS log buckets

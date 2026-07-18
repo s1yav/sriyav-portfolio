@@ -36,7 +36,7 @@ images:
 # Retrieve the GitHub Access Token from Secret Manager
 availableSecrets:
   secretManager:
-    - versionName: 'projects/$PROJECT_ID/secrets/github-access-token/versions/latest'
+    - versionName: 'projects/$PROJECT_ID/secrets/$_GITHUB_ACCESS_TOKEN_ID/versions/latest'
       env: 'GITHUB_TOKEN'
 
 options:

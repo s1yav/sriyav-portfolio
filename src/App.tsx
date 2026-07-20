@@ -305,6 +305,22 @@ const PROJECTS = [
     title: 'Google Cloud',
     subtitle: 'GitOps & Infrastructure',
     description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
+    githubUrl: 'https://github.com/s1yav/gcp-gitops-infra',
+    expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
+    deepDiveSections: [
+      {
+        title: 'Core Topology & Virtual Networks',
+        details: 'The underlying VPC is segmented into isolated private subnets across multi-region configurations. All outbound internet traffic passes through custom-routed NAT Gateways, while internal resources leverage Private Google Access. IAM profiles enforce the principle of least privilege, mapping system workloads to restricted cloud service identities.'
+      },
+      {
+        title: 'Automated GitOps & CI/CD Pipelines',
+        details: 'Every infrastructure or configuration alteration is represented as code inside a version-controlled git repository. Upon pull-request initiation, a continuous integration workflow triggers in Cloud Build to validate syntax, execute static security analysis via Snyk, and plan modifications. Approvals trigger deterministic deployment phases.'
+      },
+      {
+        title: 'Runtime Orchestration & GKE Security',
+        details: 'Compute workloads are containerized and scheduled on GKE Autopilot private clusters. Ingress controllers distribute requests using intelligent layer-7 load balancing, guarded by enterprise-tier Cloud Armor security policy rules to neutralize common web attack vectors.'
+      }
+    ],
     colorTheme: 'gcp',
     phases: [
       {
@@ -350,6 +366,22 @@ const PROJECTS = [
     title: 'Applied AI & Agentic Architecture',
     subtitle: 'Applied AI & Agentic Architecture',
     description: 'An orchestration system built to transform loose natural language inputs into deterministic, structured workflows. Employs advanced routing, function tooling, and self-correcting loop chains.',
+    githubUrl: 'https://github.com/s1yav/agentic-ai-orchestration',
+    expandedOverview: 'A modular, high-agency AI orchestration engine that translates unstructured natural language commands into deterministic, multi-step execution pipelines. The platform utilizes advanced high-dimensional embedding projection to classify user intent, maps decisions to secure schema-compliant system toolsets, and establishes asynchronous multi-agent collaboration with built-in self-healing validation to ensure high accuracy and resilience.',
+    deepDiveSections: [
+      {
+        title: 'Intent Classification & Vector Routing',
+        details: 'Input queries are processed by generating high-dimensional dense embeddings. A semantic routing layer evaluates these vectors against known system actions using cosine similarity metrics, routing requests to domain-specific agent models with minimal latency.'
+      },
+      {
+        title: 'Deterministic Function Calling',
+        details: 'To bridge loose model text outputs with rigid programmatic APIs, we declare explicit tool definitions with JSON-Schema formats. The orchestration layer parses response arguments and automatically verifies types prior to execution, maintaining high system integrity.'
+      },
+      {
+        title: 'Consensus Reconciliation Loops',
+        details: 'For complex multi-stage tasks, a primary Coordinator delegates responsibilities to dedicated sub-agents. These agents coordinate asynchronously, evaluating intermediate results and resolving disputes through a deterministic consensus-building workflow before finalizing the transaction.'
+      }
+    ],
     colorTheme: 'agentic',
     phases: [
       {
@@ -418,6 +450,43 @@ const WorkspacePage = () => {
     'google-cloud': 0,
     'agentic-ai': 0,
   });
+
+  const [activeFilter, setActiveFilter] = useState<'all' | 'google-cloud' | 'agentic-ai'>('all');
+
+  const [selectedProjectDetail, setSelectedProjectDetail] = useState<any | null>(null);
+
+  const [isFilterVisible, setIsFilterVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY || window.pageYOffset;
+      if (currentScrollY < 0) return;
+
+      if (currentScrollY > lastScrollY.current && currentScrollY > 150) {
+        setIsFilterVisible(false);
+      } else if (currentScrollY < lastScrollY.current) {
+        setIsFilterVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (selectedProjectDetail) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedProjectDetail]);
 
   const [swipeActiveIndexes, setSwipeActiveIndexes] = useState<{ [key: string]: number }>({
     'google-cloud': 0,
@@ -659,11 +728,40 @@ const WorkspacePage = () => {
       transition={{ duration: 0.6 }}
       className="pt-40 pb-20 min-h-screen relative"
     >
+      {/* Sticky Horizontal Filter Bar */}
+      <div className={`sticky top-[72px] md:top-[80px] z-30 bg-o5-beige/90 dark:bg-o5-beige/90 backdrop-blur-md border-b border-o5-ink/10 py-4 mb-10 transition-all duration-300 transform ${
+        isFilterVisible ? 'translate-y-0 opacity-100' : '-translate-y-24 md:-translate-y-28 opacity-0 pointer-events-none'
+      }`}>
+        <div className="editorial-container flex flex-wrap justify-center md:justify-start items-center gap-3">
+          <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-o5-ink/40 mr-2 sm:block hidden">Filter:</span>
+          {[
+            { id: 'all', label: 'All' },
+            { id: 'google-cloud', label: 'Google Cloud' },
+            { id: 'agentic-ai', label: 'Applied AI & Agentic Architecture' }
+          ].map((btn) => {
+            const isActive = activeFilter === btn.id;
+            return (
+              <button
+                key={btn.id}
+                onClick={() => setActiveFilter(btn.id as any)}
+                className={`font-mono text-[9px] tracking-wider uppercase px-4 py-1.5 rounded-full border transition-all duration-300 cursor-pointer ${
+                  isActive 
+                    ? 'bg-o5-ink text-o5-beige border-o5-ink dark:bg-o5-ink dark:text-o5-beige dark:border-o5-ink' 
+                    : 'bg-transparent text-o5-ink/40 border-o5-ink/10 hover:text-o5-ink hover:border-o5-ink/20 hover:bg-o5-ink/[0.02]'
+                }`}
+              >
+                {btn.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Interactive Projects Workspace */}
-      <div className="editorial-container mb-32 pt-12">
+      <div className="editorial-container mb-32 pt-4">
         {/* Project Cards */}
         <div className="space-y-20">
-          {PROJECTS.map((project) => {
+          {PROJECTS.filter(p => activeFilter === 'all' || p.id === activeFilter).map((project) => {
             const activePhaseIdx = activeProjectPhases[project.id] ?? 0;
             const activePhase = project.phases[activePhaseIdx];
 
@@ -676,13 +774,36 @@ const WorkspacePage = () => {
                 {/* Project Header Bar */}
                 <div className="border-b border-o5-ink/5 px-8 md:px-12 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-o5-ink/[0.01]">
                   <div>
-                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-o5-ink/40">Active Deployments</span>
-                    <h2 className="text-xl md:text-2xl font-serif text-o5-ink mt-0.5 font-light">{project.title}</h2>
+                    <h2 className="text-xl md:text-2xl font-serif text-o5-ink mt-0.5 font-light flex items-center gap-3">
+                      <span>{project.title}</span>
+                      <a 
+                        href={project.githubUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-o5-ink/40 hover:text-o5-ink transition-all duration-300 hover:scale-110 p-1 flex items-center justify-center cursor-pointer"
+                        title={`View ${project.title} Repository`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Github size={18} />
+                      </a>
+                    </h2>
+                    <button
+                      onClick={() => setSelectedProjectDetail(project)}
+                      className="font-mono text-[9px] uppercase tracking-[0.2em] text-o5-ink hover:text-o5-ink/60 mt-2 block transition-all duration-300 cursor-pointer text-left hover:underline font-medium"
+                    >
+                      [ READ MORE ]
+                    </button>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="font-mono text-[9px] uppercase tracking-widest text-o5-ink/60">{project.subtitle}</span>
                   </div>
+                </div>
+
+                {/* Project Brief Description */}
+                <div className="px-8 md:px-12 py-5 border-b border-o5-ink/5 bg-o5-ink/[0.005]">
+                  <p className="text-xs font-serif text-o5-ink/75 max-w-4xl leading-relaxed">
+                    {project.description.length > 150 ? `${project.description.slice(0, 150)}...` : project.description}
+                  </p>
                 </div>
 
                 {/* 1. Desktop & Laptop View (Interactive Grid with Floating Spec Timeline) */}
@@ -759,11 +880,6 @@ const WorkspacePage = () => {
                   <div className="lg:col-span-4 relative flex flex-col justify-center pl-10 lg:border-l border-o5-ink/5 min-h-[220px]">
                     <div className="space-y-4">
                       
-                      {/* Floating Timeline label */}
-                      <p className="font-mono text-[9px] tracking-[0.25em] text-o5-ink/30 uppercase mb-4 pl-3">
-                        FLOATING NAVIGATOR // SPEC STEPS
-                      </p>
-
                       <div className="relative flex flex-col gap-2">
                         {/* Interactive Steps */}
                         {project.phases.map((phase, idx) => {
@@ -797,15 +913,6 @@ const WorkspacePage = () => {
                                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                 />
                               )}
-
-                              {/* Number Circle */}
-                              <div className={`h-6 w-6 rounded-full flex items-center justify-center font-mono text-[10px] transition-colors duration-300 ${
-                                isSelected 
-                                  ? 'bg-o5-ink text-o5-beige font-bold' 
-                                  : 'bg-o5-ink/5 text-o5-ink/40 group-hover:text-o5-ink/60'
-                              }`}>
-                                {phase.num}
-                              </div>
 
                               {/* Info Labels */}
                               <div className="flex flex-col">
@@ -1024,6 +1131,148 @@ const WorkspacePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Immersive Dedicated Project Deep-Dive Page */}
+      <AnimatePresence>
+        {selectedProjectDetail && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="fixed inset-0 z-[10000] w-full h-screen bg-o5-beige overflow-y-auto px-6 py-12 md:px-16 md:py-20 flex flex-col justify-between selection:bg-o5-ink selection:text-o5-white"
+          >
+            {/* Top Navigation Row */}
+            <div className="w-full max-w-6xl mx-auto flex items-center justify-between border-b border-o5-ink/15 pb-6 mb-10">
+              <div className="flex items-center gap-4">
+                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-o5-ink/40">PROJECT ARCHITECTURE DEEP-DIVE</span>
+                <span className="text-o5-ink/20">|</span>
+                <a
+                  href={selectedProjectDetail.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[9px] uppercase tracking-wider text-o5-ink/60 hover:text-o5-ink flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Github size={14} /> Repository
+                </a>
+              </div>
+              
+              <button
+                onClick={() => setSelectedProjectDetail(null)}
+                className="font-mono text-[10px] uppercase tracking-[0.2em] text-o5-ink hover:text-o5-ink/60 transition-all border border-o5-ink/20 px-3.5 py-1.5 rounded cursor-pointer"
+              >
+                [ CLOSE SPEC ]
+              </button>
+            </div>
+
+            {/* Core Blueprint Layout */}
+            <div className="w-full max-w-6xl mx-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start pb-16">
+              
+              {/* Left Column: Summary, Architectural Tenets */}
+              <div className="lg:col-span-5 space-y-8 text-left">
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-o5-ink/40">SYSTEM OVERVIEW</span>
+                  <h1 className="text-3xl md:text-5xl font-serif text-o5-ink font-light tracking-tight mt-2 mb-4 leading-none uppercase">
+                    {selectedProjectDetail.title}
+                  </h1>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-o5-ink/50 block">
+                    {selectedProjectDetail.subtitle}
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-sm md:text-base font-serif text-o5-ink/80 leading-relaxed uppercase">
+                    {selectedProjectDetail.expandedOverview}
+                  </p>
+                </div>
+
+                {/* Key Architectural Specifications */}
+                <div className="pt-6 border-t border-o5-ink/10 space-y-6">
+                  <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-o5-ink/40">CORE ARCHITECTURAL SEGMENTS</h3>
+                  <div className="space-y-5">
+                    {selectedProjectDetail.deepDiveSections.map((sec: any, idx: number) => (
+                      <div key={idx} className="space-y-1.5">
+                        <h4 className="font-mono text-xs font-semibold text-o5-ink tracking-wide">
+                          0{idx + 1} // {sec.title}
+                        </h4>
+                        <p className="text-xs font-serif text-o5-ink/60 leading-relaxed pl-4 border-l border-o5-ink/10 uppercase">
+                          {sec.details}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Full Interactive Systems Flow / Specification Steps Timeline */}
+              <div className="lg:col-span-7 space-y-6 text-left">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-o5-ink/40 block">FULL PIPELINE ARCHITECTURE SPECIFICATION</span>
+                
+                <div className="border border-o5-ink/10 rounded-2xl bg-o5-ink/[0.01] p-6 md:p-8 space-y-10">
+                  {selectedProjectDetail.phases.map((ph: any, idx: number) => (
+                    <div key={idx} className="relative flex gap-6 md:gap-8 group">
+                      {/* Vertical connector line */}
+                      {idx !== selectedProjectDetail.phases.length - 1 && (
+                        <div className="absolute left-[15px] top-8 bottom-[-40px] w-[1px] bg-o5-ink/15" />
+                      )}
+
+                      {/* Step Circle */}
+                      <div className="relative z-10 flex-none h-8 w-8 rounded-full bg-o5-ink text-o5-beige flex items-center justify-center font-mono text-xs font-bold shadow-sm">
+                        {ph.num}
+                      </div>
+
+                      {/* Content block */}
+                      <div className="space-y-3 pb-4">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <h4 className="font-mono text-xs font-bold text-o5-ink uppercase tracking-wide">
+                            {ph.title}
+                          </h4>
+                          <span className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">
+                            {ph.duration}
+                          </span>
+                        </div>
+
+                        <p className="text-xs font-serif text-o5-ink/75 leading-relaxed max-w-xl uppercase">
+                          {ph.description}
+                        </p>
+
+                        {/* Tech items */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {ph.tech.map((t: string, tIdx: number) => (
+                            <span 
+                              key={tIdx}
+                              className="font-mono text-[8px] px-2 py-0.5 bg-o5-ink/5 rounded text-o5-ink/70 border border-o5-ink/5"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Metric */}
+                        <div className="pt-2 flex items-center justify-between border-t border-o5-ink/5 max-w-md">
+                          <span className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">
+                            Metric Target: {ph.metrics.label}
+                          </span>
+                          <span className="font-mono text-[9px] font-bold text-o5-ink">
+                            {ph.metrics.value}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Info Status bar */}
+            <div className="w-full max-w-6xl mx-auto border-t border-o5-ink/15 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[9px] text-o5-ink/40">
+              <span>ESTABLISHED HYBRID PROTOCOLS // IMMUTABLE TOPOLOGY</span>
+              <span>UTC STATUS: COMPLIANT</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

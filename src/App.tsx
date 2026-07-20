@@ -6,7 +6,18 @@ import {
   Moon,
   ArrowUp,
   Github,
-  Linkedin
+  Linkedin,
+  Server,
+  Cloud,
+  Cpu,
+  Database,
+  Network,
+  Brain,
+  Sparkles,
+  Workflow,
+  Terminal,
+  Activity,
+  Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -288,7 +299,112 @@ const HomePage = ({ onNavigate }: { onNavigate: (page: PageType) => void; key?: 
   );
 };
 
+const PROJECTS = [
+  {
+    id: 'google-cloud',
+    title: 'Google Cloud',
+    subtitle: 'GitOps & Infrastructure',
+    description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
+    colorTheme: 'gcp',
+    phases: [
+      {
+        num: '01',
+        title: 'Terraform State & Core Topology',
+        duration: 'Infrastructure Planning',
+        description: 'Provisioning multi-region Virtual Private Clouds (VPC) with non-overlapping subnets, secure NAT Gateways, and isolated private Google Access layers. Remote state is managed securely with Cloud Storage locks.',
+        tech: ['Terraform', 'GCP VPC', 'Cloud Storage', 'IAM Roles'],
+        metrics: { label: 'Topology Latency', value: '< 2ms' },
+        icon: 'network'
+      },
+      {
+        num: '02',
+        title: 'GitOps Automation & Build Pipeline',
+        duration: 'Continuous Deployment',
+        description: 'Continuous integration and delivery using Cloud Build, triggered directly by GitHub commits. Every pull request executes structural linting, security scanning with Snyk, and plans deployment changes.',
+        tech: ['Cloud Build', 'GitHub Actions', 'Artifact Registry', 'Snyk'],
+        metrics: { label: 'Build Execution', value: '4m 12s' },
+        icon: 'terminal'
+      },
+      {
+        num: '03',
+        title: 'GKE Container Orchestration',
+        duration: 'Runtime Scheduling',
+        description: 'Deploying highly available Google Kubernetes Engine (GKE) autopilot clusters utilizing private nodes. Traffic routing is managed via GKE Ingress controllers backed by Cloud Armor WAF security rules.',
+        tech: ['GKE Autopilot', 'Kubernetes', 'Cloud Armor', 'Ingress'],
+        metrics: { label: 'Pod Autoscale Threshold', value: '75% CPU' },
+        icon: 'server'
+      },
+      {
+        num: '04',
+        title: 'Observability & Cloud Monitoring',
+        duration: 'Telemetry Systems',
+        description: 'Comprehensive logging and performance metrics telemetry. Implemented real-time anomaly detection with Cloud Logging sinks, Prometheus custom exporters, and Google Managed Service for Prometheus dashboards.',
+        tech: ['Cloud Monitoring', 'Prometheus', 'Grafana', 'Cloud Logging'],
+        metrics: { label: 'Log Ingestion Rate', value: '150 GB/day' },
+        icon: 'activity'
+      }
+    ]
+  },
+  {
+    id: 'agentic-ai',
+    title: 'Applied AI & Agentic Architecture',
+    subtitle: 'Applied AI & Agentic Architecture',
+    description: 'An orchestration system built to transform loose natural language inputs into deterministic, structured workflows. Employs advanced routing, function tooling, and self-correcting loop chains.',
+    colorTheme: 'agentic',
+    phases: [
+      {
+        num: '01',
+        title: 'Semantic Router & Intent Classification',
+        duration: 'Context Classification',
+        description: 'Incoming queries are projected into vector space using advanced text embeddings. A custom distance-metric router classifies intent, instantly routing queries to dedicated sub-agent models.',
+        tech: ['Gemini API', 'Vector Embeddings', 'Cosine Similarity', 'Cosine Router'],
+        metrics: { label: 'Intent Classification Accuracy', value: '98.4%' },
+        icon: 'brain'
+      },
+      {
+        num: '02',
+        title: 'Deterministic Function Calling & Tooling',
+        duration: 'Tool Parameter Synthesis',
+        description: 'Enabling direct model-to-system interactions. Models execute structured schemas that represent platform APIs, converting natural language into verified, structured parameter payloads.',
+        tech: ['Gemini SDK', 'JSON Schema', 'Rest APIs', 'Type Verification'],
+        metrics: { label: 'Tool Schema Error Rate', value: '< 0.1%' },
+        icon: 'cpu'
+      },
+      {
+        num: '03',
+        title: 'Multi-Agent Consensus Network',
+        duration: 'Hierarchical Orchestration',
+        description: 'Orchestrating specialized sub-agents via a central high-agency Coordinator agent. Sub-agents communicate asynchronously, reviewing output and solving complex, multi-modal engineering tasks.',
+        tech: ['Agentic Consensus', 'LangChain', 'Context Pooling', 'Async Workers'],
+        metrics: { label: 'Task Completion Rate', value: '92.1%' },
+        icon: 'bot'
+      },
+      {
+        num: '04',
+        title: 'Self-Correcting Guardrails & Healing',
+        duration: 'Validation & Prevention',
+        description: 'An automated verification pipeline that parses response payloads against Pydantic-style validation models. If parsing fails, the system feeds the syntax error back to the LLM for self-correction.',
+        tech: ['Pydantic Validators', 'Self-Healing AST', 'Retry Policies', 'Context Re-injection'],
+        metrics: { label: 'Self-Healing Success Rate', value: '96.8%' },
+        icon: 'sparkles'
+      }
+    ]
+  }
+];
 
+const getPhaseIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'network': return <Network size={16} />;
+    case 'terminal': return <Terminal size={16} />;
+    case 'server': return <Server size={16} />;
+    case 'activity': return <Activity size={16} />;
+    case 'brain': return <Brain size={16} />;
+    case 'cpu': return <Cpu size={16} />;
+    case 'bot': return <Bot size={16} />;
+    case 'sparkles': return <Sparkles size={16} />;
+    default: return <Workflow size={16} />;
+  }
+};
 
 const WorkspacePage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -298,6 +414,45 @@ const WorkspacePage = () => {
   const [colorMode, setColorMode] = useState<'slate' | 'cyber' | 'aurora'>('slate');
   const [isMouseIn, setIsMouseIn] = useState(false);
   const mouseRef = useRef({ x: 0, y: 0 });
+  const [activeProjectPhases, setActiveProjectPhases] = useState<{ [key: string]: number }>({
+    'google-cloud': 0,
+    'agentic-ai': 0,
+  });
+
+  const [swipeActiveIndexes, setSwipeActiveIndexes] = useState<{ [key: string]: number }>({
+    'google-cloud': 0,
+    'agentic-ai': 0,
+  });
+
+  const handleSwiperScroll = (projectId: string, e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const scrollPosition = container.scrollLeft;
+    const cardWidth = container.clientWidth;
+    if (cardWidth === 0) return;
+    const newIndex = Math.round(scrollPosition / cardWidth);
+    if (swipeActiveIndexes[projectId] !== newIndex) {
+      setSwipeActiveIndexes(prev => ({
+        ...prev,
+        [projectId]: newIndex
+      }));
+    }
+  };
+
+  const scrollToSwipeIndex = (projectId: string, index: number) => {
+    const container = document.getElementById(`swiper-${projectId}`);
+    if (container) {
+      const cardWidth = container.clientWidth;
+      container.scrollTo({
+        left: cardWidth * index,
+        behavior: 'smooth'
+      });
+      setSwipeActiveIndexes(prev => ({
+        ...prev,
+        [projectId]: index
+      }));
+    }
+  };
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -502,12 +657,268 @@ const WorkspacePage = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
-      className="pt-40 pb-20 min-h-screen"
+      className="pt-40 pb-20 min-h-screen relative"
     >
-      {/* Completely blank workspace page on display */}
-      <div className="editorial-container min-h-[50vh]">
-        {/* Intentionally left blank */}
+      {/* Interactive Projects Workspace */}
+      <div className="editorial-container mb-32 pt-12">
+        {/* Project Cards */}
+        <div className="space-y-20">
+          {PROJECTS.map((project) => {
+            const activePhaseIdx = activeProjectPhases[project.id] ?? 0;
+            const activePhase = project.phases[activePhaseIdx];
+
+            return (
+              <div 
+                key={project.id}
+                id={project.id}
+                className="bg-o5-beige/45 dark:bg-o5-ink/5 backdrop-blur-md rounded-2xl border border-o5-ink/10 shadow-sm overflow-hidden text-left hover:border-o5-ink/20 transition-all duration-500"
+              >
+                {/* Project Header Bar */}
+                <div className="border-b border-o5-ink/5 px-8 md:px-12 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-o5-ink/[0.01]">
+                  <div>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-o5-ink/40">Active Deployments</span>
+                    <h2 className="text-xl md:text-2xl font-serif text-o5-ink mt-0.5 font-light">{project.title}</h2>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-mono text-[9px] uppercase tracking-widest text-o5-ink/60">{project.subtitle}</span>
+                  </div>
+                </div>
+
+                {/* 1. Desktop & Laptop View (Interactive Grid with Floating Spec Timeline) */}
+                <div className="hidden lg:grid grid-cols-12 gap-10 p-8 md:p-12 relative">
+                  
+                  {/* Left Column: Interactive details of the active phase */}
+                  <div className="lg:col-span-8 flex flex-col justify-between space-y-12 min-h-[320px]">
+                    
+                    {/* Active Phase Content with Motion */}
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activePhaseIdx}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 12 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className="space-y-6"
+                      >
+                        {/* Phase Number & Duration Tag */}
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-o5-ink/5 text-o5-ink font-mono text-xs font-bold">
+                            {activePhase.num}
+                          </span>
+                          <span className="font-mono text-[10px] tracking-wider text-o5-ink/40 uppercase">
+                            {activePhase.duration}
+                          </span>
+                        </div>
+
+                        {/* Phase Title */}
+                        <h3 className="text-lg md:text-xl font-serif text-o5-ink font-light tracking-tight flex items-center gap-2.5">
+                          <span className="text-o5-ink/60 p-1.5 bg-o5-ink/5 rounded">
+                            {getPhaseIcon(activePhase.icon)}
+                          </span>
+                          {activePhase.title}
+                        </h3>
+
+                        {/* Phase Detailed Description */}
+                        <p className="text-sm md:text-base font-serif text-o5-ink/80 leading-relaxed max-w-2xl">
+                          {activePhase.description}
+                        </p>
+
+                        {/* Technologies Used */}
+                        <div className="pt-4 flex flex-wrap gap-2 items-center">
+                          <span className="font-mono text-[9px] uppercase tracking-widest text-o5-ink/40 mr-1">Stack:</span>
+                          {activePhase.tech.map((t, idx) => (
+                            <span 
+                              key={idx}
+                              className="font-mono text-[9px] px-2.5 py-1 bg-o5-ink/5 rounded text-o5-ink/70 border border-o5-ink/5"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+
+                    {/* Active Phase Metric Panel */}
+                    <div className="border-t border-o5-ink/5 pt-6 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-2 w-2 rounded-full bg-o5-ink/20" />
+                        <div>
+                          <p className="font-mono text-[9px] uppercase tracking-widest text-o5-ink/40">Metric Parameter</p>
+                          <p className="font-mono text-xs font-medium text-o5-ink/70">{activePhase.metrics.label}</p>
+                        </div>
+                      </div>
+                      <div className="bg-o5-ink/[0.03] px-4 py-2 rounded border border-o5-ink/5">
+                        <span className="font-mono text-xs font-bold text-o5-ink tracking-wider">{activePhase.metrics.value}</span>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Right Column: Floating Timeline Navigator (Desktop only) */}
+                  <div className="lg:col-span-4 relative flex flex-col justify-center pl-10 lg:border-l border-o5-ink/5 min-h-[220px]">
+                    <div className="space-y-4">
+                      
+                      {/* Floating Timeline label */}
+                      <p className="font-mono text-[9px] tracking-[0.25em] text-o5-ink/30 uppercase mb-4 pl-3">
+                        FLOATING NAVIGATOR // SPEC STEPS
+                      </p>
+
+                      <div className="relative flex flex-col gap-2">
+                        {/* Interactive Steps */}
+                        {project.phases.map((phase, idx) => {
+                          const isSelected = activePhaseIdx === idx;
+                          return (
+                            <button
+                              key={phase.num}
+                              onMouseEnter={() => {
+                                setActiveProjectPhases(prev => ({
+                                  ...prev,
+                                  [project.id]: idx
+                                }));
+                              }}
+                              onClick={() => {
+                                setActiveProjectPhases(prev => ({
+                                  ...prev,
+                                  [project.id]: idx
+                                }));
+                              }}
+                              className={`group text-left px-4 py-3 rounded-lg flex items-center gap-4 transition-all duration-300 relative focus:outline-none cursor-pointer w-full ${
+                                isSelected 
+                                  ? 'bg-o5-ink/5 dark:bg-o5-beige/5 font-bold' 
+                                  : 'hover:bg-o5-ink/[0.02]'
+                              }`}
+                            >
+                              {/* Sliding indicator bar */}
+                              {isSelected && (
+                                <motion.div 
+                                  layoutId={`active-timeline-indicator-${project.id}`}
+                                  className="absolute left-0 top-0 bottom-0 w-1 bg-o5-ink rounded-l"
+                                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                />
+                              )}
+
+                              {/* Number Circle */}
+                              <div className={`h-6 w-6 rounded-full flex items-center justify-center font-mono text-[10px] transition-colors duration-300 ${
+                                isSelected 
+                                  ? 'bg-o5-ink text-o5-beige font-bold' 
+                                  : 'bg-o5-ink/5 text-o5-ink/40 group-hover:text-o5-ink/60'
+                              }`}>
+                                {phase.num}
+                              </div>
+
+                              {/* Info Labels */}
+                              <div className="flex flex-col">
+                                <span className={`font-mono text-[10px] uppercase tracking-wider transition-colors duration-300 ${
+                                  isSelected ? 'text-o5-ink' : 'text-o5-ink/40 group-hover:text-o5-ink/60'
+                                }`}>
+                                  {phase.title.split(' & ')[0].split(' // ')[0].substring(0, 24)}...
+                                </span>
+                                <span className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">
+                                  {phase.duration}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* 2. Mobile & Tablet View (Swipeable list with indicators, NO vertical floating navigator) */}
+                <div className="block lg:hidden">
+                  <div 
+                    id={`swiper-${project.id}`}
+                    onScroll={(e) => handleSwiperScroll(project.id, e)}
+                    className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-6 p-6 md:p-8 scroll-smooth"
+                  >
+                    {project.phases.map((phase, idx) => (
+                      <div 
+                        key={phase.num}
+                        className="flex-none w-[90%] md:w-[75%] snap-center bg-o5-ink/[0.02] dark:bg-o5-ink/[0.04] p-6 rounded-xl border border-o5-ink/10 flex flex-col justify-between space-y-6 text-left"
+                      >
+                        <div className="space-y-4">
+                          {/* Phase Header */}
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center justify-center h-7 w-7 rounded-full bg-o5-ink/5 text-o5-ink font-mono text-xs font-bold">
+                              {phase.num}
+                            </span>
+                            <span className="font-mono text-[9px] tracking-wider text-o5-ink/40 uppercase">
+                              {phase.duration}
+                            </span>
+                          </div>
+
+                          {/* Phase Title */}
+                          <h3 className="text-base font-serif text-o5-ink font-light tracking-tight flex items-center gap-2">
+                            <span className="text-o5-ink/60 p-1.5 bg-o5-ink/5 rounded">
+                              {getPhaseIcon(phase.icon)}
+                            </span>
+                            {phase.title}
+                          </h3>
+
+                          {/* Description */}
+                          <p className="text-xs font-serif text-o5-ink/70 leading-relaxed">
+                            {phase.description}
+                          </p>
+
+                          {/* Stack */}
+                          <div className="pt-2 flex flex-wrap gap-1.5">
+                            {phase.tech.map((t, idx) => (
+                              <span 
+                                key={idx}
+                                className="font-mono text-[8px] px-2 py-0.5 bg-o5-ink/5 rounded text-o5-ink/70 border border-o5-ink/5"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Metric Panel */}
+                        <div className="border-t border-o5-ink/5 pt-4 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-1.5 rounded-full bg-o5-ink/20" />
+                            <div>
+                              <p className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">Metric</p>
+                              <p className="font-mono text-[9px] text-o5-ink/60">{phase.metrics.label}</p>
+                            </div>
+                          </div>
+                          <div className="bg-o5-ink/[0.03] px-2.5 py-1 rounded border border-o5-ink/5">
+                            <span className="font-mono text-[9px] font-bold text-o5-ink tracking-wider">{phase.metrics.value}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Swipe Navigation Dots */}
+                  <div className="flex justify-center items-center gap-2.5 pb-6">
+                    {project.phases.map((_, idx) => {
+                      const isActive = (swipeActiveIndexes[project.id] ?? 0) === idx;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => scrollToSwipeIndex(project.id, idx)}
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            isActive ? 'w-6 bg-o5-ink' : 'w-2 bg-o5-ink/20 hover:bg-o5-ink/40'
+                          }`}
+                          aria-label={`Go to step ${idx + 1}`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
       </div>
+
+
 
       {/* Preserve the physics adjustments code but do not display it on the workspace page */}
       <div className="hidden" aria-hidden="true">
@@ -797,6 +1208,9 @@ const Footer = ({ onNavigate }: { onNavigate: (page: PageType) => void }) => {
     </footer>
   );
 };
+
+
+
 
 const ScrollToTop = () => {
   const [isVisible, setIsVisible] = useState(false);

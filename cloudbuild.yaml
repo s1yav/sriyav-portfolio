@@ -1,0 +1,44 @@
+steps:
+  # Build the container image using BuildKit
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACTREGISTRY_NAME/sriyav-portfolio:$COMMIT_SHA'
+      - '.'
+    env:
+      - 'DOCKER_BUILDKIT=1'
+
+  # Promote the new image tag to the sriyav-firebasehost repository
+  - name: 'gcr.io/cloud-builders/git'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        git config --global user.email "cloudbuild@google.com"
+        git config --global user.name "Google Cloud Build"
+        
+        git clone https://x-access-token:$$GITHUB_TOKEN@github.com/s1yav/sriyav-firebasehost.git
+        cd sriyav-firebasehost
+        
+        echo "{\"commitSha\": \"$COMMIT_SHA\"}" > portfolio-image-tag.json
+        
+        git add portfolio-image-tag.json
+        git commit -m "Promote sriyav-portfolio image tag to $COMMIT_SHA" || echo "No changes to commit"
+        git push origin main
+    secretEnv:
+      - 'GITHUB_TOKEN'
+
+# Push the built image to GCP Artifact Registry
+images:
+  - '$LOCATION-docker.pkg.dev/$PROJECT_ID/$_ARTIFACTREGISTRY_NAME/sriyav-portfolio:$COMMIT_SHA'
+
+# Retrieve the GitHub Access Token from Secret Manager
+availableSecrets:
+  secretManager:
+    - versionName: 'projects/$PROJECT_ID/secrets/$_GITHUB_ACCESS_TOKEN_ID/versions/latest'
+      env: 'GITHUB_TOKEN'
+
+options:
+  # Log directly to Google Cloud Logging to avoid dependencies on GCS log buckets
+  logging: CLOUD_LOGGING_ONLY

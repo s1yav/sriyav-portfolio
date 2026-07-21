@@ -14,6 +14,7 @@
   --color-o5-dark: var(--o5-ink);
   --color-o5-beige: var(--o5-beige);
   --color-o5-paper: var(--o5-beige);
+  --color-o5-card: var(--o5-card-bg);
   --halftone: radial-gradient(circle, currentColor 1px, transparent 1px);
 }
 
@@ -44,12 +45,14 @@
     --o5-ink: #000000;
     --o5-ink-rgb: 0, 0, 0;
     --o5-beige: #fcfaf7;
+    --o5-card-bg: rgba(0, 0, 0, 0.01);
   }
 
   .dark {
     --o5-ink: #fcfaf7;
     --o5-ink-rgb: 252, 250, 247;
     --o5-beige: #0a0a0a;
+    --o5-card-bg: #000000;
   }
 
   body {
@@ -79,7 +82,7 @@
 }
 
 .editorial-container {
-  @apply max-w-[1800px] mx-auto px-8 md:px-16;
+  @apply max-w-[1800px] mx-auto px-4 sm:px-8 md:px-16;
 }
 
 .lifestyle-grid {

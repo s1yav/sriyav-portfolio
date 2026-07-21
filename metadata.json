@@ -1,5 +1,8 @@
 {
   "name": "Portfolio",
   "description": "Personal website for Sriya",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

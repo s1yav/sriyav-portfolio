@@ -20,6 +20,99 @@ import {
   Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Mermaid } from './components/Mermaid';
+
+const MERMAID_DIAGRAM = `---
+config:
+  theme: neo-dark
+---
+sequenceDiagram
+    autonumber
+    actor Dev as Developer
+
+    box "GitHub"
+        participant GH as GitHub Repository
+    end
+
+    box "GitOps Project (Google Cloud)"
+        participant CC as Google Cloud Build v2 Connection
+        participant CBE as Google Cloud Build Engine
+        participant GSM as Google Cloud Secret Manager
+        participant GSA as Google Cloud Service Account (s1yav-cloudbuild-sa)
+        participant CBW as Google Cloud Build Worker VM
+        participant GAR as Google Cloud Artifact Registry
+    end
+
+    box "Target App Project (Google Cloud: sriyav-portfolio)"
+        participant FSA as Google Cloud Service Account (sriyav-firebasehost-sa)
+        participant PUL as Pulumi / Cloud APIs
+        participant AppHosting as Google Firebase App Hosting
+    end
+
+    %% Phase 1: Application Commit & Artifact Build (GitOps Local)
+    Dev->>GH: Push App Code (sriyav-portfolio)
+    activate GH
+    GH->>CC: HTTPS Webhook Post (Push Payload)
+    deactivate GH
+    activate CC
+    CC->>GSM: Read GitHub Token Credentials
+    GSM-->>CC: Return GitHub Token
+    CC->>CC: Validate Webhook Signature
+    CC->>CBE: Route Webhook to Trigger
+    deactivate CC
+    activate CBE
+    CBE->>CBW: Provision Worker VM (runs as s1yav-cloudbuild-sa)
+    deactivate CBE
+    activate CBW
+    Note over CBW: Build frontend site & Docker container
+    CBW->>GAR: Push Image locally (docker push)
+    activate GAR
+    GAR-->>CBW: Confirm Image Push (200 OK)
+    deactivate GAR
+    Note over CBW: Update portfolio-image-tag.json manifest
+    CBW->>GH: Push tag manifest to sriyav-firebasehost repo
+    deactivate CBW
+
+    %% Phase 2: Infrastructure Trigger & Cross-Account Deploy
+    activate GH
+    GH->>CC: HTTPS Webhook Post (Manifest Push Payload)
+    deactivate GH
+    activate CC
+    CC->>CBE: Route Webhook to Infrastructure Trigger
+    deactivate CC
+    activate CBE
+    CBE->>GSM: Read secrets (Pulumi Token, etc.)
+    GSM-->>CBE: Return Decrypted Secrets
+    CBE->>CBW: Provision Worker VM (runs as s1yav-cloudbuild-sa)
+    deactivate CBE
+    activate CBW
+    CBW->>FSA: Impersonate Firebase App Hosting SA (Cross-Project IAM Trust)
+    activate FSA
+    FSA-->>CBW: Return Short-lived OAuth Token
+    deactivate FSA
+    CBW->>PUL: Run Pulumi update (using impersonated FSA token)
+    activate PUL
+    PUL->>AppHosting: Create AppHostingBuild pointing to GAR image
+    activate AppHosting
+    %% Cross-Account Fetch
+    AppHosting->>GAR: Pull Container Image (Cross-Account Fetch)
+    activate GAR
+    GAR-->>AppHosting: Return Image Bytes
+    deactivate GAR
+    Note over AppHosting: Deploy & build container instance
+    AppHosting-->>PUL: AppHostingBuild created successfully
+    deactivate AppHosting
+    PUL->>AppHosting: Adjust traffic routing (100% to new build)
+    PUL-->>CBW: Pulumi stack update complete
+    deactivate PUL
+    CBW-->>CBE: Pipeline Execution Status (Success)
+    deactivate CBW
+    activate CBE
+    CBE->>GH: Write Commit Check Status (Success)
+    deactivate CBE
+    activate GH
+    GH-->>Dev: Display Build Status Badge (Green Check)
+    deactivate GH`;
 
 type PageType = 'home' | 'workspace' | 'contact';
 
@@ -302,10 +395,10 @@ const HomePage = ({ onNavigate }: { onNavigate: (page: PageType) => void; key?: 
 const PROJECTS = [
   {
     id: 'google-cloud',
-    title: 'Google Cloud',
-    subtitle: 'GitOps & Infrastructure',
+    title: 'GitOps Automation Infrastructure',
+    subtitle: 'gitops automation',
     description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
-    githubUrl: 'https://github.com/s1yav/gcp-gitops-infra',
+    githubUrl: 'https://github.com/s1yav/gitops',
     expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
     deepDiveSections: [
       {
@@ -325,100 +418,161 @@ const PROJECTS = [
     phases: [
       {
         num: '01',
-        title: 'Terraform State & Core Topology',
-        duration: 'Infrastructure Planning',
-        description: 'Provisioning multi-region Virtual Private Clouds (VPC) with non-overlapping subnets, secure NAT Gateways, and isolated private Google Access layers. Remote state is managed securely with Cloud Storage locks.',
-        tech: ['Terraform', 'GCP VPC', 'Cloud Storage', 'IAM Roles'],
-        metrics: { label: 'Topology Latency', value: '< 2ms' },
+        title: 'Commit Code',
+        duration: 'Source Version Control',
+        description: 'Developer pushes code updates to the sriyav-portfolio application repository on GitHub. This triggers the automated Webhook integration.',
+        tech: ['GitHub', 'Git', 'Semantic Tags'],
+        metrics: { label: 'Webhooks Fired', value: 'Instant' },
         icon: 'network'
       },
       {
         num: '02',
-        title: 'GitOps Automation & Build Pipeline',
-        duration: 'Continuous Deployment',
-        description: 'Continuous integration and delivery using Cloud Build, triggered directly by GitHub commits. Every pull request executes structural linting, security scanning with Snyk, and plans deployment changes.',
-        tech: ['Cloud Build', 'GitHub Actions', 'Artifact Registry', 'Snyk'],
-        metrics: { label: 'Build Execution', value: '4m 12s' },
+        title: 'Build Container',
+        duration: 'Artifact Automation',
+        description: 'Google Cloud Build launches build jobs on webhook trigger, executing high-performance Docker/BuildKit compilation and security scanning before registering in Google Cloud Artifact Registry.',
+        tech: ['Google Cloud Build', 'Docker', 'Artifact Registry'],
+        metrics: { label: 'Compilation Speed', value: '4m 12s' },
         icon: 'terminal'
       },
       {
         num: '03',
-        title: 'GKE Container Orchestration',
-        duration: 'Runtime Scheduling',
-        description: 'Deploying highly available Google Kubernetes Engine (GKE) autopilot clusters utilizing private nodes. Traffic routing is managed via GKE Ingress controllers backed by Cloud Armor WAF security rules.',
-        tech: ['GKE Autopilot', 'Kubernetes', 'Cloud Armor', 'Ingress'],
-        metrics: { label: 'Pod Autoscale Threshold', value: '75% CPU' },
+        title: 'Update Container Manifest',
+        duration: 'State Manifest Promotion',
+        description: 'Under secure Google Cloud IAM Service Account Impersonation, Cloud Build updates the image-tag manifest (portfolio-image-tag.json) inside the sriyav-firebasehost configuration repository.',
+        tech: ['Google Cloud IAM', 'Pulumi', 'Secret Manager'],
+        metrics: { label: 'Security Handshake', value: 'Verified' },
         icon: 'server'
       },
       {
         num: '04',
-        title: 'Observability & Cloud Monitoring',
-        duration: 'Telemetry Systems',
-        description: 'Comprehensive logging and performance metrics telemetry. Implemented real-time anomaly detection with Cloud Logging sinks, Prometheus custom exporters, and Google Managed Service for Prometheus dashboards.',
-        tech: ['Cloud Monitoring', 'Prometheus', 'Grafana', 'Cloud Logging'],
-        metrics: { label: 'Log Ingestion Rate', value: '150 GB/day' },
+        title: 'Update Website',
+        duration: 'Serverless Delivery',
+        description: 'Google Firebase App Hosting detects the updated manifest tag, auto-provisions Cloud Run server instances with safe zero-downtime rolling deploys, and updates active Cloudflare DNS maps.',
+        tech: ['Firebase App Hosting', 'Cloud Run', 'Cloudflare'],
+        metrics: { label: 'Traffic Transition', value: '0s Downtime' },
         icon: 'activity'
       }
     ]
   },
   {
-    id: 'agentic-ai',
-    title: 'Applied AI & Agentic Architecture',
-    subtitle: 'Applied AI & Agentic Architecture',
-    description: 'An orchestration system built to transform loose natural language inputs into deterministic, structured workflows. Employs advanced routing, function tooling, and self-correcting loop chains.',
-    githubUrl: 'https://github.com/s1yav/agentic-ai-orchestration',
-    expandedOverview: 'A modular, high-agency AI orchestration engine that translates unstructured natural language commands into deterministic, multi-step execution pipelines. The platform utilizes advanced high-dimensional embedding projection to classify user intent, maps decisions to secure schema-compliant system toolsets, and establishes asynchronous multi-agent collaboration with built-in self-healing validation to ensure high accuracy and resilience.',
+    id: 'google-cloud-2',
+    title: 'GitOps Automation Infrastructure (Staging Environment)',
+    subtitle: 'gitops automation',
+    description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
+    githubUrl: 'https://github.com/s1yav/gitops',
+    expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
     deepDiveSections: [
       {
-        title: 'Intent Classification & Vector Routing',
-        details: 'Input queries are processed by generating high-dimensional dense embeddings. A semantic routing layer evaluates these vectors against known system actions using cosine similarity metrics, routing requests to domain-specific agent models with minimal latency.'
+        title: 'Core Topology & Virtual Networks',
+        details: 'The underlying VPC is segmented into isolated private subnets across multi-region configurations. All outbound internet traffic passes through custom-routed NAT Gateways, while internal resources leverage Private Google Access. IAM profiles enforce the principle of least privilege, mapping system workloads to restricted cloud service identities.'
       },
       {
-        title: 'Deterministic Function Calling',
-        details: 'To bridge loose model text outputs with rigid programmatic APIs, we declare explicit tool definitions with JSON-Schema formats. The orchestration layer parses response arguments and automatically verifies types prior to execution, maintaining high system integrity.'
+        title: 'Automated GitOps & CI/CD Pipelines',
+        details: 'Every infrastructure or configuration alteration is represented as code inside a version-controlled git repository. Upon pull-request initiation, a continuous integration workflow triggers in Cloud Build to validate syntax, execute static security analysis via Snyk, and plan modifications. Approvals trigger deterministic deployment phases.'
       },
       {
-        title: 'Consensus Reconciliation Loops',
-        details: 'For complex multi-stage tasks, a primary Coordinator delegates responsibilities to dedicated sub-agents. These agents coordinate asynchronously, evaluating intermediate results and resolving disputes through a deterministic consensus-building workflow before finalizing the transaction.'
+        title: 'Runtime Orchestration & GKE Security',
+        details: 'Compute workloads are containerized and scheduled on GKE Autopilot private clusters. Ingress controllers distribute requests using intelligent layer-7 load balancing, guarded by enterprise-tier Cloud Armor security policy rules to neutralize common web attack vectors.'
       }
     ],
-    colorTheme: 'agentic',
+    colorTheme: 'gcp',
     phases: [
       {
         num: '01',
-        title: 'Semantic Router & Intent Classification',
-        duration: 'Context Classification',
-        description: 'Incoming queries are projected into vector space using advanced text embeddings. A custom distance-metric router classifies intent, instantly routing queries to dedicated sub-agent models.',
-        tech: ['Gemini API', 'Vector Embeddings', 'Cosine Similarity', 'Cosine Router'],
-        metrics: { label: 'Intent Classification Accuracy', value: '98.4%' },
-        icon: 'brain'
+        title: 'Commit Code',
+        duration: 'Source Version Control',
+        description: 'Developer pushes code updates to the sriyav-portfolio application repository on GitHub. This triggers the automated Webhook integration.',
+        tech: ['GitHub', 'Git', 'Semantic Tags'],
+        metrics: { label: 'Webhooks Fired', value: 'Instant' },
+        icon: 'network'
       },
       {
         num: '02',
-        title: 'Deterministic Function Calling & Tooling',
-        duration: 'Tool Parameter Synthesis',
-        description: 'Enabling direct model-to-system interactions. Models execute structured schemas that represent platform APIs, converting natural language into verified, structured parameter payloads.',
-        tech: ['Gemini SDK', 'JSON Schema', 'Rest APIs', 'Type Verification'],
-        metrics: { label: 'Tool Schema Error Rate', value: '< 0.1%' },
-        icon: 'cpu'
+        title: 'Build Container',
+        duration: 'Artifact Automation',
+        description: 'Google Cloud Build launches build jobs on webhook trigger, executing high-performance Docker/BuildKit compilation and security scanning before registering in Google Cloud Artifact Registry.',
+        tech: ['Google Cloud Build', 'Docker', 'Artifact Registry'],
+        metrics: { label: 'Compilation Speed', value: '4m 12s' },
+        icon: 'terminal'
       },
       {
         num: '03',
-        title: 'Multi-Agent Consensus Network',
-        duration: 'Hierarchical Orchestration',
-        description: 'Orchestrating specialized sub-agents via a central high-agency Coordinator agent. Sub-agents communicate asynchronously, reviewing output and solving complex, multi-modal engineering tasks.',
-        tech: ['Agentic Consensus', 'LangChain', 'Context Pooling', 'Async Workers'],
-        metrics: { label: 'Task Completion Rate', value: '92.1%' },
-        icon: 'bot'
+        title: 'Update Container Manifest',
+        duration: 'State Manifest Promotion',
+        description: 'Under secure Google Cloud IAM Service Account Impersonation, Cloud Build updates the image-tag manifest (portfolio-image-tag.json) inside the sriyav-firebasehost configuration repository.',
+        tech: ['Google Cloud IAM', 'Pulumi', 'Secret Manager'],
+        metrics: { label: 'Security Handshake', value: 'Verified' },
+        icon: 'server'
       },
       {
         num: '04',
-        title: 'Self-Correcting Guardrails & Healing',
-        duration: 'Validation & Prevention',
-        description: 'An automated verification pipeline that parses response payloads against Pydantic-style validation models. If parsing fails, the system feeds the syntax error back to the LLM for self-correction.',
-        tech: ['Pydantic Validators', 'Self-Healing AST', 'Retry Policies', 'Context Re-injection'],
-        metrics: { label: 'Self-Healing Success Rate', value: '96.8%' },
-        icon: 'sparkles'
+        title: 'Update Website',
+        duration: 'Serverless Delivery',
+        description: 'Google Firebase App Hosting detects the updated manifest tag, auto-provisions Cloud Run server instances with safe zero-downtime rolling deploys, and updates active Cloudflare DNS maps.',
+        tech: ['Firebase App Hosting', 'Cloud Run', 'Cloudflare'],
+        metrics: { label: 'Traffic Transition', value: '0s Downtime' },
+        icon: 'activity'
+      }
+    ]
+  },
+  {
+    id: 'google-cloud-3',
+    title: 'GitOps Automation Infrastructure (Production Environment)',
+    subtitle: 'gitops automation',
+    description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
+    githubUrl: 'https://github.com/s1yav/gitops',
+    expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
+    deepDiveSections: [
+      {
+        title: 'Core Topology & Virtual Networks',
+        details: 'The underlying VPC is segmented into isolated private subnets across multi-region configurations. All outbound internet traffic passes through custom-routed NAT Gateways, while internal resources leverage Private Google Access. IAM profiles enforce the principle of least privilege, mapping system workloads to restricted cloud service identities.'
+      },
+      {
+        title: 'Automated GitOps & CI/CD Pipelines',
+        details: 'Every infrastructure or configuration alteration is represented as code inside a version-controlled git repository. Upon pull-request initiation, a continuous integration workflow triggers in Cloud Build to validate syntax, execute static security analysis via Snyk, and plan modifications. Approvals trigger deterministic deployment phases.'
+      },
+      {
+        title: 'Runtime Orchestration & GKE Security',
+        details: 'Compute workloads are containerized and scheduled on GKE Autopilot private clusters. Ingress controllers distribute requests using intelligent layer-7 load balancing, guarded by enterprise-tier Cloud Armor security policy rules to neutralize common web attack vectors.'
+      }
+    ],
+    colorTheme: 'gcp',
+    phases: [
+      {
+        num: '01',
+        title: 'Commit Code',
+        duration: 'Source Version Control',
+        description: 'Developer pushes code updates to the sriyav-portfolio application repository on GitHub. This triggers the automated Webhook integration.',
+        tech: ['GitHub', 'Git', 'Semantic Tags'],
+        metrics: { label: 'Webhooks Fired', value: 'Instant' },
+        icon: 'network'
+      },
+      {
+        num: '02',
+        title: 'Build Container',
+        duration: 'Artifact Automation',
+        description: 'Google Cloud Build launches build jobs on webhook trigger, executing high-performance Docker/BuildKit compilation and security scanning before registering in Google Cloud Artifact Registry.',
+        tech: ['Google Cloud Build', 'Docker', 'Artifact Registry'],
+        metrics: { label: 'Compilation Speed', value: '4m 12s' },
+        icon: 'terminal'
+      },
+      {
+        num: '03',
+        title: 'Update Container Manifest',
+        duration: 'State Manifest Promotion',
+        description: 'Under secure Google Cloud IAM Service Account Impersonation, Cloud Build updates the image-tag manifest (portfolio-image-tag.json) inside the sriyav-firebasehost configuration repository.',
+        tech: ['Google Cloud IAM', 'Pulumi', 'Secret Manager'],
+        metrics: { label: 'Security Handshake', value: 'Verified' },
+        icon: 'server'
+      },
+      {
+        num: '04',
+        title: 'Update Website',
+        duration: 'Serverless Delivery',
+        description: 'Google Firebase App Hosting detects the updated manifest tag, auto-provisions Cloud Run server instances with safe zero-downtime rolling deploys, and updates active Cloudflare DNS maps.',
+        tech: ['Firebase App Hosting', 'Cloud Run', 'Cloudflare'],
+        metrics: { label: 'Traffic Transition', value: '0s Downtime' },
+        icon: 'activity'
       }
     ]
   }
@@ -438,7 +592,82 @@ const getPhaseIcon = (iconName: string) => {
   }
 };
 
-const WorkspacePage = () => {
+const Footer = ({ onNavigate }: { onNavigate: (page: PageType) => void }) => {
+  return (
+    <footer className="py-48 editorial-container text-center text-o5-ink">
+      <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-wrap justify-center gap-8 label-mono">
+          <button onClick={() => onNavigate('home')} className="hover:text-o5-ink transition-colors uppercase">Home</button>
+          <button onClick={() => onNavigate('workspace')} className="hover:text-o5-ink transition-colors uppercase">Workspace</button>
+          <button onClick={() => onNavigate('contact')} className="hover:text-o5-ink transition-colors uppercase">Contact</button>
+        </div>
+        
+        <div className="flex justify-center items-center gap-10 mt-4">
+          <a 
+            href="https://github.com/s1yav" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-o5-ink/60 hover:text-o5-ink transition-all duration-300 hover:scale-110 active:scale-95 p-2 block"
+            aria-label="GitHub Profile"
+          >
+            <Github size={48} />
+          </a>
+          <a 
+            href="https://www.linkedin.com/in/sriyavenk/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-o5-ink/60 hover:text-o5-ink transition-all duration-300 hover:scale-110 active:scale-95 p-2 block"
+            aria-label="LinkedIn Profile"
+          >
+            <Linkedin size={48} />
+          </a>
+        </div>
+
+        <p className="max-w-2xl font-mono text-[8px] uppercase tracking-[0.2em] leading-relaxed text-o5-ink/40 px-4 mt-12 text-center">
+          NOTHING IN LIFE IS TO BE FEARED, IT IS ONLY TO BE UNDERSTOOD.<br />
+          NOW IS THE TIME TO UNDERSTAND MORE SO THAT WE MAY FEAR LESS.<br />
+          — MARIE CURIE
+        </p>
+      </div>
+    </footer>
+  );
+};
+
+const ProjectThumbnailVideo = ({ projectId, activePhaseIdx }: { projectId: string; activePhaseIdx: number }) => {
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.load();
+      videoRef.current.play().catch((err) => {
+        console.log("Autoplay waiting for video population:", err);
+      });
+    }
+  }, [projectId, activePhaseIdx]);
+
+  const baseProjectId = projectId.replace(/-\d+$/, '');
+  const videoSrc = `/videos/${baseProjectId}-phase-${activePhaseIdx + 1}.mp4`;
+
+  return (
+    <div className="relative rounded-xl overflow-hidden bg-o5-card aspect-video flex flex-col w-full min-h-[220px]">
+      {/* Video element - prepped for hosting short videos demonstrating gitops workflows */}
+      <video
+        ref={videoRef}
+        key={`${projectId}-${activePhaseIdx}`}
+        className="absolute inset-0 w-full h-full object-cover"
+        src={videoSrc}
+        loop
+        muted={isMuted}
+        autoPlay
+        playsInline
+        referrerPolicy="no-referrer"
+      />
+    </div>
+  );
+};
+
+const WorkspacePage = ({ onNavigate, darkMode }: { onNavigate: (page: PageType) => void; darkMode: boolean; key?: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [particleCount, setParticleCount] = useState(120);
   const [gravity, setGravity] = useState(0.4);
@@ -448,10 +677,11 @@ const WorkspacePage = () => {
   const mouseRef = useRef({ x: 0, y: 0 });
   const [activeProjectPhases, setActiveProjectPhases] = useState<{ [key: string]: number }>({
     'google-cloud': 0,
-    'agentic-ai': 0,
+    'google-cloud-2': 0,
+    'google-cloud-3': 0,
   });
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'google-cloud' | 'agentic-ai'>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
 
   const [selectedProjectDetail, setSelectedProjectDetail] = useState<any | null>(null);
 
@@ -490,7 +720,8 @@ const WorkspacePage = () => {
 
   const [swipeActiveIndexes, setSwipeActiveIndexes] = useState<{ [key: string]: number }>({
     'google-cloud': 0,
-    'agentic-ai': 0,
+    'google-cloud-2': 0,
+    'google-cloud-3': 0,
   });
 
   const handleSwiperScroll = (projectId: string, e: React.UIEvent<HTMLDivElement>) => {
@@ -736,8 +967,7 @@ const WorkspacePage = () => {
           <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-o5-ink/40 mr-2 sm:block hidden">Filter:</span>
           {[
             { id: 'all', label: 'All' },
-            { id: 'google-cloud', label: 'Google Cloud' },
-            { id: 'agentic-ai', label: 'Applied AI & Agentic Architecture' }
+            { id: 'google-cloud', label: 'Google Cloud' }
           ].map((btn) => {
             const isActive = activeFilter === btn.id;
             return (
@@ -761,7 +991,7 @@ const WorkspacePage = () => {
       <div className="editorial-container mb-32 pt-4">
         {/* Project Cards */}
         <div className="space-y-20">
-          {PROJECTS.filter(p => activeFilter === 'all' || p.id === activeFilter).map((project) => {
+          {PROJECTS.filter(p => activeFilter === 'all' || p.id === activeFilter || p.id.startsWith(activeFilter)).map((project) => {
             const activePhaseIdx = activeProjectPhases[project.id] ?? 0;
             const activePhase = project.phases[activePhaseIdx];
 
@@ -769,118 +999,62 @@ const WorkspacePage = () => {
               <div 
                 key={project.id}
                 id={project.id}
-                className="bg-o5-beige/45 dark:bg-o5-ink/5 backdrop-blur-md rounded-2xl border border-o5-ink/10 shadow-sm overflow-hidden text-left hover:border-o5-ink/20 transition-all duration-500"
+                className="bg-o5-card rounded-2xl border border-o5-ink/10 shadow-sm overflow-hidden text-left hover:border-o5-ink/20 transition-all duration-500"
               >
                 {/* Project Header Bar */}
-                <div className="border-b border-o5-ink/5 px-8 md:px-12 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-o5-ink/[0.01]">
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-serif text-o5-ink mt-0.5 font-light flex items-center gap-3">
-                      <span>{project.title}</span>
+                <div className="px-4 sm:px-8 md:px-12 py-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-o5-card w-full overflow-hidden">
+                  <div className="space-y-2.5 text-left min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                      <h2 className="text-xl md:text-2xl font-serif text-o5-ink font-light flex items-center">
+                        <span>{project.title}</span>
+                      </h2>
                       <a 
                         href={project.githubUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-o5-ink/40 hover:text-o5-ink transition-all duration-300 hover:scale-110 p-1 flex items-center justify-center cursor-pointer"
+                        className="text-o5-ink/40 hover:text-o5-ink transition-all duration-300 hover:scale-110 p-1 flex items-center justify-center cursor-pointer shrink-0"
                         title={`View ${project.title} Repository`}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Github size={18} />
+                        <Github size={26} />
                       </a>
-                    </h2>
-                    <button
-                      onClick={() => setSelectedProjectDetail(project)}
-                      className="font-mono text-[9px] uppercase tracking-[0.2em] text-o5-ink hover:text-o5-ink/60 mt-2 block transition-all duration-300 cursor-pointer text-left hover:underline font-medium"
-                    >
-                      [ READ MORE ]
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[9px] uppercase tracking-widest text-o5-ink/60">{project.subtitle}</span>
-                  </div>
-                </div>
-
-                {/* Project Brief Description */}
-                <div className="px-8 md:px-12 py-5 border-b border-o5-ink/5 bg-o5-ink/[0.005]">
-                  <p className="text-xs font-serif text-o5-ink/75 max-w-4xl leading-relaxed">
-                    {project.description.length > 150 ? `${project.description.slice(0, 150)}...` : project.description}
-                  </p>
-                </div>
-
-                {/* 1. Desktop & Laptop View (Interactive Grid with Floating Spec Timeline) */}
-                <div className="hidden lg:grid grid-cols-12 gap-10 p-8 md:p-12 relative">
-                  
-                  {/* Left Column: Interactive details of the active phase */}
-                  <div className="lg:col-span-8 flex flex-col justify-between space-y-12 min-h-[320px]">
-                    
-                    {/* Active Phase Content with Motion */}
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activePhaseIdx}
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 12 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className="space-y-6"
+                      <button
+                        onClick={() => setSelectedProjectDetail(project)}
+                        className="font-mono text-[11px] uppercase tracking-[0.2em] text-o5-ink hover:text-o5-ink/60 transition-all duration-300 cursor-pointer text-left font-semibold ml-1 shrink-0"
                       >
-                        {/* Phase Number & Duration Tag */}
-                        <div className="flex items-center gap-3">
-                          <span className="flex items-center justify-center h-7 w-7 rounded-full bg-o5-ink/5 text-o5-ink font-mono text-xs font-bold">
-                            {activePhase.num}
-                          </span>
-                          <span className="font-mono text-[10px] tracking-wider text-o5-ink/40 uppercase">
-                            {activePhase.duration}
-                          </span>
-                        </div>
-
-                        {/* Phase Title */}
-                        <h3 className="text-lg md:text-xl font-serif text-o5-ink font-light tracking-tight flex items-center gap-2.5">
-                          <span className="text-o5-ink/60 p-1.5 bg-o5-ink/5 rounded">
-                            {getPhaseIcon(activePhase.icon)}
-                          </span>
-                          {activePhase.title}
-                        </h3>
-
-                        {/* Phase Detailed Description */}
-                        <p className="text-sm md:text-base font-serif text-o5-ink/80 leading-relaxed max-w-2xl">
-                          {activePhase.description}
-                        </p>
-
-                        {/* Technologies Used */}
-                        <div className="pt-4 flex flex-wrap gap-2 items-center">
-                          <span className="font-mono text-[9px] uppercase tracking-widest text-o5-ink/40 mr-1">Stack:</span>
-                          {activePhase.tech.map((t, idx) => (
-                            <span 
-                              key={idx}
-                              className="font-mono text-[9px] px-2.5 py-1 bg-o5-ink/5 rounded text-o5-ink/70 border border-o5-ink/5"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>
-
-                    {/* Active Phase Metric Panel */}
-                    <div className="border-t border-o5-ink/5 pt-6 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-2 w-2 rounded-full bg-o5-ink/20" />
-                        <div>
-                          <p className="font-mono text-[9px] uppercase tracking-widest text-o5-ink/40">Metric Parameter</p>
-                          <p className="font-mono text-xs font-medium text-o5-ink/70">{activePhase.metrics.label}</p>
-                        </div>
-                      </div>
-                      <div className="bg-o5-ink/[0.03] px-4 py-2 rounded border border-o5-ink/5">
-                        <span className="font-mono text-xs font-bold text-o5-ink tracking-wider">{activePhase.metrics.value}</span>
-                      </div>
+                        [ open ]
+                      </button>
                     </div>
+                    {/* Clean text-based subtitle to the heading (no blocks) in one single horizontal line */}
+                    <div className="flex flex-row flex-nowrap items-center gap-x-3 text-o5-ink/65 text-[10px] md:text-xs font-mono font-medium uppercase tracking-wider overflow-x-auto scrollbar-none whitespace-nowrap w-full py-0.5 select-none">
+                      {['GitHub', 'Pulumi (TypeScript)', 'Google Cloud Build', 'Google Cloud IAM', 'Google Cloud Secret Manager', 'Google Cloud Artifact Registry', 'Google Firebase App Hosting', 'Cloudflare'].map((techName, idx, arr) => (
+                        <span key={techName} className="flex items-center gap-3 shrink-0">
+                          <span>{techName}</span>
+                          {idx < arr.length - 1 && <span className="text-o5-ink/20 font-light text-sm font-sans">|</span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-start md:self-auto shrink-0 select-none">
+                    <span className="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] text-o5-ink/50 font-medium">
+                      Google Cloud
+                    </span>
+                  </div>
+                </div>
 
+                {/* Unified Responsive Project Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 pt-6 lg:pt-8 pb-8 px-4 sm:px-8 md:px-12 relative items-center bg-o5-card w-full">
+                  
+                  {/* Left Column: Visual Video Thumbnail Showcase */}
+                  <div className="col-span-1 lg:col-span-9 flex items-center justify-center w-full">
+                    <ProjectThumbnailVideo projectId={project.id} activePhaseIdx={activePhaseIdx} />
                   </div>
 
-                  {/* Right Column: Floating Timeline Navigator (Desktop only) */}
-                  <div className="lg:col-span-4 relative flex flex-col justify-center pl-10 lg:border-l border-o5-ink/5 min-h-[220px]">
-                    <div className="space-y-4">
+                  {/* Right Column: Floating Timeline Navigator (Horizontal on mobile/tablet, Vertical on desktop) */}
+                  <div className="col-span-1 lg:col-span-3 relative flex flex-col justify-center min-h-[60px] lg:min-h-[220px] w-full pr-0 overflow-hidden">
+                    <div className="w-full">
                       
-                      <div className="relative flex flex-col gap-2">
+                      <div className="relative flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible scrollbar-hide pb-2 lg:pb-0 w-full whitespace-nowrap">
                         {/* Interactive Steps */}
                         {project.phases.map((phase, idx) => {
                           const isSelected = activePhaseIdx === idx;
@@ -899,7 +1073,7 @@ const WorkspacePage = () => {
                                   [project.id]: idx
                                 }));
                               }}
-                              className={`group text-left px-4 py-3 rounded-lg flex items-center gap-4 transition-all duration-300 relative focus:outline-none cursor-pointer w-full ${
+                              className={`group text-left px-4 py-2 lg:pl-4 lg:pr-1 lg:py-3 rounded-lg flex items-center gap-3 transition-all duration-300 relative focus:outline-none cursor-pointer shrink-0 w-auto lg:w-full ${
                                 isSelected 
                                   ? 'bg-o5-ink/5 dark:bg-o5-beige/5 font-bold' 
                                   : 'hover:bg-o5-ink/[0.02]'
@@ -909,20 +1083,17 @@ const WorkspacePage = () => {
                               {isSelected && (
                                 <motion.div 
                                   layoutId={`active-timeline-indicator-${project.id}`}
-                                  className="absolute left-0 top-0 bottom-0 w-1 bg-o5-ink rounded-l"
+                                  className="absolute left-0 right-0 bottom-0 h-0.5 lg:top-0 lg:bottom-0 lg:left-0 lg:right-auto lg:w-1 lg:h-full bg-o5-ink rounded-full"
                                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                 />
                               )}
 
                               {/* Info Labels */}
-                              <div className="flex flex-col">
-                                <span className={`font-mono text-[10px] uppercase tracking-wider transition-colors duration-300 ${
-                                  isSelected ? 'text-o5-ink' : 'text-o5-ink/40 group-hover:text-o5-ink/60'
+                              <div className="flex flex-col shrink-0">
+                                <span className={`font-mono text-xs uppercase tracking-wider transition-colors duration-300 ${
+                                  isSelected ? 'text-o5-ink font-bold' : 'text-o5-ink/40 group-hover:text-o5-ink/60'
                                 }`}>
-                                  {phase.title.split(' & ')[0].split(' // ')[0].substring(0, 24)}...
-                                </span>
-                                <span className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">
-                                  {phase.duration}
+                                  {phase.title}
                                 </span>
                               </div>
                             </button>
@@ -935,89 +1106,8 @@ const WorkspacePage = () => {
 
                 </div>
 
-                {/* 2. Mobile & Tablet View (Swipeable list with indicators, NO vertical floating navigator) */}
-                <div className="block lg:hidden">
-                  <div 
-                    id={`swiper-${project.id}`}
-                    onScroll={(e) => handleSwiperScroll(project.id, e)}
-                    className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-6 p-6 md:p-8 scroll-smooth"
-                  >
-                    {project.phases.map((phase, idx) => (
-                      <div 
-                        key={phase.num}
-                        className="flex-none w-[90%] md:w-[75%] snap-center bg-o5-ink/[0.02] dark:bg-o5-ink/[0.04] p-6 rounded-xl border border-o5-ink/10 flex flex-col justify-between space-y-6 text-left"
-                      >
-                        <div className="space-y-4">
-                          {/* Phase Header */}
-                          <div className="flex items-center justify-between">
-                            <span className="flex items-center justify-center h-7 w-7 rounded-full bg-o5-ink/5 text-o5-ink font-mono text-xs font-bold">
-                              {phase.num}
-                            </span>
-                            <span className="font-mono text-[9px] tracking-wider text-o5-ink/40 uppercase">
-                              {phase.duration}
-                            </span>
-                          </div>
 
-                          {/* Phase Title */}
-                          <h3 className="text-base font-serif text-o5-ink font-light tracking-tight flex items-center gap-2">
-                            <span className="text-o5-ink/60 p-1.5 bg-o5-ink/5 rounded">
-                              {getPhaseIcon(phase.icon)}
-                            </span>
-                            {phase.title}
-                          </h3>
-
-                          {/* Description */}
-                          <p className="text-xs font-serif text-o5-ink/70 leading-relaxed">
-                            {phase.description}
-                          </p>
-
-                          {/* Stack */}
-                          <div className="pt-2 flex flex-wrap gap-1.5">
-                            {phase.tech.map((t, idx) => (
-                              <span 
-                                key={idx}
-                                className="font-mono text-[8px] px-2 py-0.5 bg-o5-ink/5 rounded text-o5-ink/70 border border-o5-ink/5"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Metric Panel */}
-                        <div className="border-t border-o5-ink/5 pt-4 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-o5-ink/20" />
-                            <div>
-                              <p className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">Metric</p>
-                              <p className="font-mono text-[9px] text-o5-ink/60">{phase.metrics.label}</p>
-                            </div>
-                          </div>
-                          <div className="bg-o5-ink/[0.03] px-2.5 py-1 rounded border border-o5-ink/5">
-                            <span className="font-mono text-[9px] font-bold text-o5-ink tracking-wider">{phase.metrics.value}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Swipe Navigation Dots */}
-                  <div className="flex justify-center items-center gap-2.5 pb-6">
-                    {project.phases.map((_, idx) => {
-                      const isActive = (swipeActiveIndexes[project.id] ?? 0) === idx;
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => scrollToSwipeIndex(project.id, idx)}
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            isActive ? 'w-6 bg-o5-ink' : 'w-2 bg-o5-ink/20 hover:bg-o5-ink/40'
-                          }`}
-                          aria-label={`Go to step ${idx + 1}`}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
+                {/* Tech stack moved to the top */}
 
               </div>
             );
@@ -1140,136 +1230,177 @@ const WorkspacePage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
-            className="fixed inset-0 z-[10000] w-full h-screen bg-o5-beige overflow-y-auto px-6 py-12 md:px-16 md:py-20 flex flex-col justify-between selection:bg-o5-ink selection:text-o5-white"
+            className="fixed inset-0 z-[10000] w-full h-screen bg-o5-beige text-o5-ink overflow-y-auto p-6 md:p-10 flex flex-col justify-between selection:bg-o5-ink selection:text-o5-white"
           >
-            {/* Top Navigation Row */}
-            <div className="w-full max-w-6xl mx-auto flex items-center justify-between border-b border-o5-ink/15 pb-6 mb-10">
-              <div className="flex items-center gap-4">
-                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-o5-ink/40">PROJECT ARCHITECTURE DEEP-DIVE</span>
-                <span className="text-o5-ink/20">|</span>
-                <a
-                  href={selectedProjectDetail.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-[9px] uppercase tracking-wider text-o5-ink/60 hover:text-o5-ink flex items-center gap-1.5 transition-all cursor-pointer"
+            {/* a [close] button on the right top corner of the page should take users back to the workspace page */}
+            <button
+              onClick={() => setSelectedProjectDetail(null)}
+              className="absolute top-8 right-8 md:top-12 md:right-16 font-mono text-xs uppercase tracking-widest text-o5-ink hover:text-o5-ink/60 transition-colors cursor-pointer"
+            >
+              [close]
+            </button>
+
+            {/* Empty Hero region (top space) */}
+            <div className="w-full h-12 md:h-16" />
+
+            {/* The project title and the github icon should be placed in the center of the page */}
+            <div className="flex-1 flex flex-col items-center justify-center py-20 px-4">
+              <div className="relative w-full max-w-4xl flex items-center justify-center mb-8">
+                <h1 className="text-3xl md:text-5xl font-serif font-light tracking-tight text-o5-ink uppercase leading-none text-center px-16">
+                  {selectedProjectDetail.title}
+                </h1>
+                <button
+                  onClick={() => setSelectedProjectDetail(null)}
+                  className="absolute right-0 font-mono text-xs uppercase tracking-widest text-o5-ink hover:text-o5-ink/60 transition-colors cursor-pointer"
                 >
-                  <Github size={14} /> Repository
-                </a>
+                  [close]
+                </button>
               </div>
-              
-              <button
-                onClick={() => setSelectedProjectDetail(null)}
-                className="font-mono text-[10px] uppercase tracking-[0.2em] text-o5-ink hover:text-o5-ink/60 transition-all border border-o5-ink/20 px-3.5 py-1.5 rounded cursor-pointer"
+              <a
+                href={selectedProjectDetail.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-o5-ink/60 hover:text-o5-ink transition-all duration-300 hover:scale-110 p-2 flex items-center justify-center cursor-pointer mb-12"
+                title={`View ${selectedProjectDetail.title} Repository`}
               >
-                [ CLOSE SPEC ]
-              </button>
-            </div>
+                <Github size={48} />
+              </a>
 
-            {/* Core Blueprint Layout */}
-            <div className="w-full max-w-6xl mx-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start pb-16">
-              
-              {/* Left Column: Summary, Architectural Tenets */}
-              <div className="lg:col-span-5 space-y-8 text-left">
-                <div>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-o5-ink/40">SYSTEM OVERVIEW</span>
-                  <h1 className="text-3xl md:text-5xl font-serif text-o5-ink font-light tracking-tight mt-2 mb-4 leading-none uppercase">
-                    {selectedProjectDetail.title}
-                  </h1>
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-o5-ink/50 block">
-                    {selectedProjectDetail.subtitle}
-                  </span>
-                </div>
+              {/* Mermaid Diagram */}
+              <div className="w-full max-w-5xl overflow-visible">
+                <Mermaid chart={MERMAID_DIAGRAM} darkMode={darkMode} />
+              </div>
 
-                <div className="space-y-4">
-                  <p className="text-sm md:text-base font-serif text-o5-ink/80 leading-relaxed uppercase">
-                    {selectedProjectDetail.expandedOverview}
+              {/* Tech Stack Section */}
+              <div className="w-full max-w-5xl mt-16 border-t border-o5-ink/10 pt-16 text-left">
+                <div className="flex flex-col md:flex-row md:items-baseline md:justify-between mb-8 pb-4 border-b border-o5-ink/10">
+                  <h2 className="text-2xl font-serif font-light tracking-tight text-o5-ink uppercase">
+                    Tech Stack
+                  </h2>
+                  <p className="font-mono text-xs text-o5-ink/50 mt-1 md:mt-0 uppercase tracking-widest">
+                    GitOps Automation Infrastructure
                   </p>
                 </div>
+                
 
-                {/* Key Architectural Specifications */}
-                <div className="pt-6 border-t border-o5-ink/10 space-y-6">
-                  <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-o5-ink/40">CORE ARCHITECTURAL SEGMENTS</h3>
-                  <div className="space-y-5">
-                    {selectedProjectDetail.deepDiveSections.map((sec: any, idx: number) => (
-                      <div key={idx} className="space-y-1.5">
-                        <h4 className="font-mono text-xs font-semibold text-o5-ink tracking-wide">
-                          0{idx + 1} // {sec.title}
-                        </h4>
-                        <p className="text-xs font-serif text-o5-ink/60 leading-relaxed pl-4 border-l border-o5-ink/10 uppercase">
-                          {sec.details}
-                        </p>
-                      </div>
-                    ))}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Layer 1 */}
+                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">01 // LAYER</span>
+                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                      Source Control & Versioning (GitOps Entry Points)
+                    </h3>
+                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                      <li>
+                        <strong className="font-medium text-o5-ink">GitHub:</strong> Manages the multi-repo codebase:
+                        <div className="mt-2 pl-3 border-l border-o5-ink/10 space-y-1 font-mono text-xs text-o5-ink/70">
+                          <div>• sriyav-portfolio <span className="opacity-50">(Application Repository)</span></div>
+                          <div>• sriyav-firebasehost <span className="opacity-50">(Infrastructure Repository)</span></div>
+                          <div>• gitops <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
+                        </div>
+                      </li>
+                      <li>
+                        <strong className="font-medium text-o5-ink">Git Manifests:</strong> Employs declarative JSON structures (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">portfolio-image-tag.json</code>) to track and promote Docker container tags between repositories.
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Layer 2 */}
+                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">02 // LAYER</span>
+                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                      Infrastructure as Code (IaC)
+                    </h3>
+                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                      <li>
+                        <strong className="font-medium text-o5-ink">Pulumi (TypeScript/Node.js):</strong> Declaratively defines and deploys the entire GCP and Firebase infrastructure stack (custom domains, backends, traffic splits, and service accounts).
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Layer 3 */}
+                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">03 // LAYER</span>
+                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                      CI/CD & Build Automation (GitOps Control Project)
+                    </h3>
+                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                      <li>
+                        <strong className="font-medium text-o5-ink">Google Cloud Build (v2 Connections):</strong> Automates pipeline jobs by responding to GitHub webhooks.
+                      </li>
+                      <li>
+                        <strong className="font-medium text-o5-ink">Docker & BuildKit:</strong> Packages and builds the Node.js/Express portfolio web application container.
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Layer 4 */}
+                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">04 // LAYER</span>
+                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                      Security & Identity
+                    </h3>
+                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                      <li>
+                        <strong className="font-medium text-o5-ink">Google Cloud IAM:</strong> Facilitates secure <strong className="font-medium text-o5-ink">Service Account Impersonation</strong> (exchanging the GitOps <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">s1yav-cloudbuild-sa</code> identity for short-lived access as <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">sriyav-firebasehost-sa</code> in the target project), removing the need for static API keys.
+                      </li>
+                      <li>
+                        <strong className="font-medium text-o5-ink">Google Cloud Secret Manager:</strong> Encrypts and securely injects GitHub and Pulumi API access tokens into build environments at runtime.
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Layer 5 */}
+                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">05 // LAYER</span>
+                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                      Artifact Storage
+                    </h3>
+                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                      <li>
+                        <strong className="font-medium text-o5-ink">Google Cloud Artifact Registry:</strong> Securely stores built Docker container images before deployment.
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Layer 6 */}
+                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">06 // LAYER</span>
+                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                      Hosting & Server Compute (Target Project)
+                    </h3>
+                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                      <li>
+                        <strong className="font-medium text-o5-ink">Google Firebase App Hosting:</strong> Next-generation serverless hosting platform that manages the lifecycle of your web app under-the-hood (auto-provisioning Cloud Run instances and routing traffic).
+                      </li>
+                      <li>
+                        <strong className="font-medium text-o5-ink">Express (TypeScript):</strong> The backend framework powering your portfolio website and API routes.
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Layer 7 */}
+                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300 md:col-span-2">
+                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">07 // LAYER</span>
+                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                      DNS & Custom Domains
+                    </h3>
+                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                      <li>
+                        <strong className="font-medium text-o5-ink">Cloudflare:</strong> Acts as the DNS Registrar, managing your custom domain (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">sriyav.com</code> and <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">www.sriyav.com</code>) routing records (A, CNAME, and TXT verification records).
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
-
-              {/* Right Column: Full Interactive Systems Flow / Specification Steps Timeline */}
-              <div className="lg:col-span-7 space-y-6 text-left">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-o5-ink/40 block">FULL PIPELINE ARCHITECTURE SPECIFICATION</span>
-                
-                <div className="border border-o5-ink/10 rounded-2xl bg-o5-ink/[0.01] p-6 md:p-8 space-y-10">
-                  {selectedProjectDetail.phases.map((ph: any, idx: number) => (
-                    <div key={idx} className="relative flex gap-6 md:gap-8 group">
-                      {/* Vertical connector line */}
-                      {idx !== selectedProjectDetail.phases.length - 1 && (
-                        <div className="absolute left-[15px] top-8 bottom-[-40px] w-[1px] bg-o5-ink/15" />
-                      )}
-
-                      {/* Step Circle */}
-                      <div className="relative z-10 flex-none h-8 w-8 rounded-full bg-o5-ink text-o5-beige flex items-center justify-center font-mono text-xs font-bold shadow-sm">
-                        {ph.num}
-                      </div>
-
-                      {/* Content block */}
-                      <div className="space-y-3 pb-4">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <h4 className="font-mono text-xs font-bold text-o5-ink uppercase tracking-wide">
-                            {ph.title}
-                          </h4>
-                          <span className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">
-                            {ph.duration}
-                          </span>
-                        </div>
-
-                        <p className="text-xs font-serif text-o5-ink/75 leading-relaxed max-w-xl uppercase">
-                          {ph.description}
-                        </p>
-
-                        {/* Tech items */}
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {ph.tech.map((t: string, tIdx: number) => (
-                            <span 
-                              key={tIdx}
-                              className="font-mono text-[8px] px-2 py-0.5 bg-o5-ink/5 rounded text-o5-ink/70 border border-o5-ink/5"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Metric */}
-                        <div className="pt-2 flex items-center justify-between border-t border-o5-ink/5 max-w-md">
-                          <span className="font-mono text-[8px] uppercase tracking-widest text-o5-ink/30">
-                            Metric Target: {ph.metrics.label}
-                          </span>
-                          <span className="font-mono text-[9px] font-bold text-o5-ink">
-                            {ph.metrics.value}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
             </div>
 
-            {/* Bottom Info Status bar */}
-            <div className="w-full max-w-6xl mx-auto border-t border-o5-ink/15 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[9px] text-o5-ink/40">
-              <span>ESTABLISHED HYBRID PROTOCOLS // IMMUTABLE TOPOLOGY</span>
-              <span>UTC STATUS: COMPLIANT</span>
-            </div>
+            {/* All pages MUST have the same footer including the pages within the Project cards */}
+            <Footer onNavigate={(page) => {
+              setSelectedProjectDetail(null);
+              onNavigate(page);
+            }} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -1295,10 +1426,10 @@ const ContactPage = () => {
     
     // Simulate compilation style submission logs! Matches the CS journal theme incredibly well!
     const consoleLogs = [
-      "Initializing secure outbound thread...",
-      "Validating telemetry package schema...",
-      `Encrypting payload for node: ${formState.email}...`,
-      "Synthesizing transaction package...",
+      "Initializing secure outbound thread",
+      "Validating telemetry package schema",
+      `Encrypting payload for node: ${formState.email}`,
+      "Synthesizing transaction package",
       "Dispatch completed successfully! Message is in flight."
     ];
 
@@ -1318,7 +1449,7 @@ const ContactPage = () => {
       className="pt-40 pb-20 min-h-screen"
     >
       <div className="editorial-container">
-        <div className="max-w-2xl mx-auto bg-o5-ink/5 border border-o5-ink/5 p-8 md:p-12 rounded-2xl text-left">
+        <div className="max-w-2xl mx-auto bg-o5-card border border-o5-ink/10 p-8 md:p-12 rounded-2xl text-left shadow-sm">
           {!submitted ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -1330,7 +1461,7 @@ const ContactPage = () => {
                   value={formState.name}
                   onChange={handleInputChange}
                   required
-                  placeholder="YOUR NAME..."
+                  placeholder="YOUR NAME"
                   className="w-full bg-o5-beige border border-o5-ink/10 rounded-xl px-4 py-3 font-mono text-sm text-o5-ink focus:outline-none focus:border-o5-ink transition-colors placeholder:text-o5-ink/20"
                 />
               </div>
@@ -1344,7 +1475,7 @@ const ContactPage = () => {
                   value={formState.email}
                   onChange={handleInputChange}
                   required
-                  placeholder="YOUR EMAIL ADDRESS..."
+                  placeholder="YOUR EMAIL ADDRESS"
                   className="w-full bg-o5-beige border border-o5-ink/10 rounded-xl px-4 py-3 font-mono text-sm text-o5-ink focus:outline-none focus:border-o5-ink transition-colors placeholder:text-o5-ink/20"
                 />
               </div>
@@ -1358,7 +1489,7 @@ const ContactPage = () => {
                   value={formState.message}
                   onChange={handleInputChange}
                   required
-                  placeholder="YOUR MESSAGE..."
+                  placeholder="YOUR MESSAGE"
                   className="w-full bg-o5-beige border border-o5-ink/10 rounded-xl px-4 py-3 font-mono text-sm text-o5-ink focus:outline-none focus:border-o5-ink transition-colors placeholder:text-o5-ink/20 resize-none"
                 />
               </div>
@@ -1417,46 +1548,7 @@ const ContactPage = () => {
   );
 };
 
-const Footer = ({ onNavigate }: { onNavigate: (page: PageType) => void }) => {
-  return (
-    <footer className="py-48 editorial-container text-center text-o5-ink">
-      <div className="flex flex-col items-center gap-8">
-        <div className="flex flex-wrap justify-center gap-8 label-mono">
-          <button onClick={() => onNavigate('home')} className="hover:text-o5-ink transition-colors uppercase">Home</button>
-          <button onClick={() => onNavigate('workspace')} className="hover:text-o5-ink transition-colors uppercase">Workspace</button>
-          <button onClick={() => onNavigate('contact')} className="hover:text-o5-ink transition-colors uppercase">Contact</button>
-        </div>
-        
-        <div className="flex justify-center items-center gap-10 mt-4">
-          <a 
-            href="https://github.com/s1yav" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-o5-ink/60 hover:text-o5-ink transition-all duration-300 hover:scale-110 active:scale-95 p-2 block"
-            aria-label="GitHub Profile"
-          >
-            <Github size={48} />
-          </a>
-          <a 
-            href="https://www.linkedin.com/in/sriyavenk/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-o5-ink/60 hover:text-o5-ink transition-all duration-300 hover:scale-110 active:scale-95 p-2 block"
-            aria-label="LinkedIn Profile"
-          >
-            <Linkedin size={48} />
-          </a>
-        </div>
 
-        <p className="max-w-2xl font-mono text-[8px] uppercase tracking-[0.2em] leading-relaxed text-o5-ink/40 px-4 mt-12 text-center">
-          NOTHING IN LIFE IS TO BE FEARED, IT IS ONLY TO BE UNDERSTOOD.<br />
-          NOW IS THE TIME TO UNDERSTAND MORE SO THAT WE MAY FEAR LESS.<br />
-          — MARIE CURIE
-        </p>
-      </div>
-    </footer>
-  );
-};
 
 
 
@@ -1543,7 +1635,7 @@ export default function App() {
             <HomePage key="home" onNavigate={handleNavigate} />
           )}
           {currentPage === 'workspace' && (
-            <WorkspacePage key="workspace" />
+            <WorkspacePage key="workspace" onNavigate={handleNavigate} darkMode={darkMode} />
           )}
           {currentPage === 'contact' && (
             <ContactPage key="contact" />

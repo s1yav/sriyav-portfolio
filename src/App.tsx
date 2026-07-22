@@ -114,6 +114,58 @@ sequenceDiagram
     GH-->>Dev: Display Build Status Badge (Green Check)
     deactivate GH`;
 
+const FIREBASE_APP_HOSTING_MERMAID_DIAGRAM = `---
+config:
+  theme: neo-dark
+---
+sequenceDiagram
+    autonumber
+    actor Visitor as Website Visitor
+    actor Dev as Developer
+    participant CF as Cloudflare DNS Console
+    participant PUL as Pulumi Engine (sriyav-firebasehost)
+    participant FAH as Google Firebase App Hosting
+
+    %% Phase 1: Declarative Domain Mapping Provisioning
+    Dev->>PUL: Run Pulumi Deployment (pulumi up)
+    activate PUL
+    PUL->>FAH: Create custom domain mappings (sriyav.com & www.sriyav.com)
+    activate FAH
+    Note over FAH: Generate TXT ownership token & CNAME/A routing records
+    FAH-->>PUL: Return domain mapping state (Status: PENDING_OWNERSHIP)
+    deactivate FAH
+    PUL-->>Dev: Log DNS records to verify (Outputs: domainStatus)
+    deactivate PUL
+
+    %% Phase 2: Manual DNS Record Copying
+    Dev->>FAH: Read required TXT verification & CNAME/A records
+    Dev->>CF: Add TXT (ownership) & CNAME/A (routing) records manually
+    activate CF
+    Note over CF: Cloudflare DNS propagates records globally
+    CF-->>Dev: DNS Propagation Active
+    deactivate CF
+
+    %% Phase 3: Verification & Certificate Provisioning
+    activate FAH
+    Note over FAH: Poll Cloudflare DNS for verification token
+    FAH->>CF: Query TXT verification record
+    activate CF
+    CF-->>FAH: Return ownership token
+    deactivate CF
+    Note over FAH: Domain verified (Status: CERT_ACTIVE, HOST_ACTIVE)
+    Note over FAH: Provision SSL/TLS certificate automatically
+    deactivate FAH
+
+    %% Phase 4: Visitor Request Routing
+    Visitor->>CF: Query DNS for sriyav.com
+    activate CF
+    CF-->>Visitor: Return Firebase CDN A/AAAA/CNAME record values
+    deactivate CF
+    Visitor->>FAH: Send HTTPS request to resolved IPs (sriyav.com)
+    activate FAH
+    FAH-->>Visitor: Serve static & dynamic portfolio page bytes
+    deactivate FAH`;
+
 type PageType = 'home' | 'workspace' | 'contact';
 
 const Navbar = ({ 
@@ -399,6 +451,7 @@ const PROJECTS = [
     subtitle: 'gitops automation',
     description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
     githubUrl: 'https://github.com/s1yav/gitops',
+    mermaidDiagram: MERMAID_DIAGRAM,
     expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
     deepDiveSections: [
       {
@@ -427,7 +480,7 @@ const PROJECTS = [
       },
       {
         num: '02',
-        title: 'Build Container',
+        title: 'Auto Build Container',
         duration: 'Artifact Automation',
         description: 'Google Cloud Build launches build jobs on webhook trigger, executing high-performance Docker/BuildKit compilation and security scanning before registering in Google Cloud Artifact Registry.',
         tech: ['Google Cloud Build', 'Docker', 'Artifact Registry'],
@@ -436,7 +489,7 @@ const PROJECTS = [
       },
       {
         num: '03',
-        title: 'Update Container Manifest',
+        title: 'Auto Update Container Manifest',
         duration: 'State Manifest Promotion',
         description: 'Under secure Google Cloud IAM Service Account Impersonation, Cloud Build updates the image-tag manifest (portfolio-image-tag.json) inside the sriyav-firebasehost configuration repository.',
         tech: ['Google Cloud IAM', 'Pulumi', 'Secret Manager'],
@@ -445,7 +498,7 @@ const PROJECTS = [
       },
       {
         num: '04',
-        title: 'Update Website',
+        title: 'Auto Update Website',
         duration: 'Serverless Delivery',
         description: 'Google Firebase App Hosting detects the updated manifest tag, auto-provisions Cloud Run server instances with safe zero-downtime rolling deploys, and updates active Cloudflare DNS maps.',
         tech: ['Firebase App Hosting', 'Cloud Run', 'Cloudflare'],
@@ -456,10 +509,11 @@ const PROJECTS = [
   },
   {
     id: 'google-cloud-2',
-    title: 'GitOps Automation Infrastructure (Staging Environment)',
+    title: 'Firebase App Hosting',
     subtitle: 'gitops automation',
     description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
     githubUrl: 'https://github.com/s1yav/gitops',
+    mermaidDiagram: FIREBASE_APP_HOSTING_MERMAID_DIAGRAM,
     expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
     deepDiveSections: [
       {
@@ -479,7 +533,7 @@ const PROJECTS = [
     phases: [
       {
         num: '01',
-        title: 'Commit Code',
+        title: 'Register Web App',
         duration: 'Source Version Control',
         description: 'Developer pushes code updates to the sriyav-portfolio application repository on GitHub. This triggers the automated Webhook integration.',
         tech: ['GitHub', 'Git', 'Semantic Tags'],
@@ -488,7 +542,7 @@ const PROJECTS = [
       },
       {
         num: '02',
-        title: 'Build Container',
+        title: 'Configure Backend',
         duration: 'Artifact Automation',
         description: 'Google Cloud Build launches build jobs on webhook trigger, executing high-performance Docker/BuildKit compilation and security scanning before registering in Google Cloud Artifact Registry.',
         tech: ['Google Cloud Build', 'Docker', 'Artifact Registry'],
@@ -497,7 +551,7 @@ const PROJECTS = [
       },
       {
         num: '03',
-        title: 'Update Container Manifest',
+        title: 'Trigger Deployment',
         duration: 'State Manifest Promotion',
         description: 'Under secure Google Cloud IAM Service Account Impersonation, Cloud Build updates the image-tag manifest (portfolio-image-tag.json) inside the sriyav-firebasehost configuration repository.',
         tech: ['Google Cloud IAM', 'Pulumi', 'Secret Manager'],
@@ -506,68 +560,7 @@ const PROJECTS = [
       },
       {
         num: '04',
-        title: 'Update Website',
-        duration: 'Serverless Delivery',
-        description: 'Google Firebase App Hosting detects the updated manifest tag, auto-provisions Cloud Run server instances with safe zero-downtime rolling deploys, and updates active Cloudflare DNS maps.',
-        tech: ['Firebase App Hosting', 'Cloud Run', 'Cloudflare'],
-        metrics: { label: 'Traffic Transition', value: '0s Downtime' },
-        icon: 'activity'
-      }
-    ]
-  },
-  {
-    id: 'google-cloud-3',
-    title: 'GitOps Automation Infrastructure (Production Environment)',
-    subtitle: 'gitops automation',
-    description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
-    githubUrl: 'https://github.com/s1yav/gitops',
-    expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
-    deepDiveSections: [
-      {
-        title: 'Core Topology & Virtual Networks',
-        details: 'The underlying VPC is segmented into isolated private subnets across multi-region configurations. All outbound internet traffic passes through custom-routed NAT Gateways, while internal resources leverage Private Google Access. IAM profiles enforce the principle of least privilege, mapping system workloads to restricted cloud service identities.'
-      },
-      {
-        title: 'Automated GitOps & CI/CD Pipelines',
-        details: 'Every infrastructure or configuration alteration is represented as code inside a version-controlled git repository. Upon pull-request initiation, a continuous integration workflow triggers in Cloud Build to validate syntax, execute static security analysis via Snyk, and plan modifications. Approvals trigger deterministic deployment phases.'
-      },
-      {
-        title: 'Runtime Orchestration & GKE Security',
-        details: 'Compute workloads are containerized and scheduled on GKE Autopilot private clusters. Ingress controllers distribute requests using intelligent layer-7 load balancing, guarded by enterprise-tier Cloud Armor security policy rules to neutralize common web attack vectors.'
-      }
-    ],
-    colorTheme: 'gcp',
-    phases: [
-      {
-        num: '01',
-        title: 'Commit Code',
-        duration: 'Source Version Control',
-        description: 'Developer pushes code updates to the sriyav-portfolio application repository on GitHub. This triggers the automated Webhook integration.',
-        tech: ['GitHub', 'Git', 'Semantic Tags'],
-        metrics: { label: 'Webhooks Fired', value: 'Instant' },
-        icon: 'network'
-      },
-      {
-        num: '02',
-        title: 'Build Container',
-        duration: 'Artifact Automation',
-        description: 'Google Cloud Build launches build jobs on webhook trigger, executing high-performance Docker/BuildKit compilation and security scanning before registering in Google Cloud Artifact Registry.',
-        tech: ['Google Cloud Build', 'Docker', 'Artifact Registry'],
-        metrics: { label: 'Compilation Speed', value: '4m 12s' },
-        icon: 'terminal'
-      },
-      {
-        num: '03',
-        title: 'Update Container Manifest',
-        duration: 'State Manifest Promotion',
-        description: 'Under secure Google Cloud IAM Service Account Impersonation, Cloud Build updates the image-tag manifest (portfolio-image-tag.json) inside the sriyav-firebasehost configuration repository.',
-        tech: ['Google Cloud IAM', 'Pulumi', 'Secret Manager'],
-        metrics: { label: 'Security Handshake', value: 'Verified' },
-        icon: 'server'
-      },
-      {
-        num: '04',
-        title: 'Update Website',
+        title: 'View Live Site',
         duration: 'Serverless Delivery',
         description: 'Google Firebase App Hosting detects the updated manifest tag, auto-provisions Cloud Run server instances with safe zero-downtime rolling deploys, and updates active Cloudflare DNS maps.',
         tech: ['Firebase App Hosting', 'Cloud Run', 'Cloudflare'],
@@ -1268,7 +1261,7 @@ const WorkspacePage = ({ onNavigate, darkMode }: { onNavigate: (page: PageType) 
 
               {/* Mermaid Diagram */}
               <div className="w-full max-w-5xl overflow-visible">
-                <Mermaid chart={MERMAID_DIAGRAM} darkMode={darkMode} />
+                <Mermaid chart={selectedProjectDetail.mermaidDiagram || MERMAID_DIAGRAM} darkMode={darkMode} />
               </div>
 
               {/* Tech Stack Section */}
@@ -1278,121 +1271,228 @@ const WorkspacePage = ({ onNavigate, darkMode }: { onNavigate: (page: PageType) 
                     Tech Stack
                   </h2>
                   <p className="font-mono text-xs text-o5-ink/50 mt-1 md:mt-0 uppercase tracking-widest">
-                    GitOps Automation Infrastructure
+                    {selectedProjectDetail.title}
                   </p>
                 </div>
                 
+                {selectedProjectDetail.id === 'google-cloud-2' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Layer 1 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">01 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Source Control & Versioning (GitOps Entry Points)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">GitHub:</strong> Manages the multi-repo codebase:
+                          <div className="mt-2 pl-3 border-l border-o5-ink/10 space-y-1 font-mono text-xs text-o5-ink/70">
+                            <div>• sriyav-portfolio <span className="opacity-50">(Application Repository)</span></div>
+                            <div>• sriyav-firebasehost <span className="opacity-50">(Infrastructure Repository)</span></div>
+                            <div>• gitops <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
+                          </div>
+                        </li>
+                        <li>
+                          <strong className="font-medium text-o5-ink">Git Manifests:</strong> Employs declarative JSON structures (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">portfolio-image-tag.json</code>) to track and promote Docker container tags and commit SHAs between repositories.
+                        </li>
+                      </ul>
+                    </div>
 
+                    {/* Layer 2 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">02 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Infrastructure as Code (IaC)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Pulumi (TypeScript/Node.js):</strong> Declaratively defines and deploys the entire GCP and Firebase infrastructure stack (Firebase project configuration, web apps, App Hosting backends, traffic splits, and service accounts).
+                        </li>
+                      </ul>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Layer 1 */}
-                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
-                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">01 // LAYER</span>
-                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
-                      Source Control & Versioning (GitOps Entry Points)
-                    </h3>
-                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
-                      <li>
-                        <strong className="font-medium text-o5-ink">GitHub:</strong> Manages the multi-repo codebase:
-                        <div className="mt-2 pl-3 border-l border-o5-ink/10 space-y-1 font-mono text-xs text-o5-ink/70">
-                          <div>• sriyav-portfolio <span className="opacity-50">(Application Repository)</span></div>
-                          <div>• sriyav-firebasehost <span className="opacity-50">(Infrastructure Repository)</span></div>
-                          <div>• gitops <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
-                        </div>
-                      </li>
-                      <li>
-                        <strong className="font-medium text-o5-ink">Git Manifests:</strong> Employs declarative JSON structures (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">portfolio-image-tag.json</code>) to track and promote Docker container tags between repositories.
-                      </li>
-                    </ul>
+                    {/* Layer 3 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">03 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        CI/CD & Build Automation (GitOps Control Project)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud Build (v2 Connections):</strong> Automates pipeline jobs and runs infrastructure updates by responding to GitHub webhooks.
+                        </li>
+                        <li>
+                          <strong className="font-medium text-o5-ink">Docker & BuildKit:</strong> Packages and builds the portfolio web application container image from the source repository.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Layer 4 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">04 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Security & Identity
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud IAM:</strong> Facilitates secure service account impersonation (exchanging the GitOps CloudBuild identity for short-lived access as the firebasehost service account in the target project), eliminating static API keys.
+                        </li>
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud Secret Manager:</strong> Encrypts and securely injects target project IDs, registry names, and service account credentials into build environments at runtime.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Layer 5 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">05 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Artifact Storage
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud Artifact Registry:</strong> Securely stores built portfolio application Docker container images before deployment.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Layer 6 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">06 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Hosting & Server Compute (Target Project)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Firebase App Hosting:</strong> Next-generation serverless hosting platform that manages the lifecycle of the web app (auto-provisioning Cloud Run instances and routing traffic).
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Layer 7 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300 md:col-span-2">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">07 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        DNS & Custom Domains
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Firebase App Hosting Domains:</strong> Maps custom domains and subdomains (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">sriyav.com</code> and <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">www.sriyav.com</code>) to the App Hosting backend, automatically provisioning SSL/TLS certificates and custom domain routing.
+                        </li>
+                      </ul>
+                    </div>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Layer 1 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">01 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Source Control & Versioning (GitOps Entry Points)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">GitHub:</strong> Manages the multi-repo codebase:
+                          <div className="mt-2 pl-3 border-l border-o5-ink/10 space-y-1 font-mono text-xs text-o5-ink/70">
+                            <div>• sriyav-portfolio <span className="opacity-50">(Application Repository)</span></div>
+                            <div>• sriyav-firebasehost <span className="opacity-50">(Infrastructure Repository)</span></div>
+                            <div>• gitops <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
+                          </div>
+                        </li>
+                        <li>
+                          <strong className="font-medium text-o5-ink">Git Manifests:</strong> Employs declarative JSON structures (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">portfolio-image-tag.json</code>) to track and promote Docker container tags between repositories.
+                        </li>
+                      </ul>
+                    </div>
 
-                  {/* Layer 2 */}
-                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
-                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">02 // LAYER</span>
-                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
-                      Infrastructure as Code (IaC)
-                    </h3>
-                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
-                      <li>
-                        <strong className="font-medium text-o5-ink">Pulumi (TypeScript/Node.js):</strong> Declaratively defines and deploys the entire GCP and Firebase infrastructure stack (custom domains, backends, traffic splits, and service accounts).
-                      </li>
-                    </ul>
-                  </div>
+                    {/* Layer 2 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">02 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Infrastructure as Code (IaC)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Pulumi (TypeScript/Node.js):</strong> Declaratively defines and deploys the entire GCP and Firebase infrastructure stack (custom domains, backends, traffic splits, and service accounts).
+                        </li>
+                      </ul>
+                    </div>
 
-                  {/* Layer 3 */}
-                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
-                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">03 // LAYER</span>
-                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
-                      CI/CD & Build Automation (GitOps Control Project)
-                    </h3>
-                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
-                      <li>
-                        <strong className="font-medium text-o5-ink">Google Cloud Build (v2 Connections):</strong> Automates pipeline jobs by responding to GitHub webhooks.
-                      </li>
-                      <li>
-                        <strong className="font-medium text-o5-ink">Docker & BuildKit:</strong> Packages and builds the Node.js/Express portfolio web application container.
-                      </li>
-                    </ul>
-                  </div>
+                    {/* Layer 3 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">03 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        CI/CD & Build Automation (GitOps Control Project)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud Build (v2 Connections):</strong> Automates pipeline jobs by responding to GitHub webhooks.
+                        </li>
+                        <li>
+                          <strong className="font-medium text-o5-ink">Docker & BuildKit:</strong> Packages and builds the Node.js/Express portfolio web application container.
+                        </li>
+                      </ul>
+                    </div>
 
-                  {/* Layer 4 */}
-                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
-                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">04 // LAYER</span>
-                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
-                      Security & Identity
-                    </h3>
-                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
-                      <li>
-                        <strong className="font-medium text-o5-ink">Google Cloud IAM:</strong> Facilitates secure <strong className="font-medium text-o5-ink">Service Account Impersonation</strong> (exchanging the GitOps <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">s1yav-cloudbuild-sa</code> identity for short-lived access as <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">sriyav-firebasehost-sa</code> in the target project), removing the need for static API keys.
-                      </li>
-                      <li>
-                        <strong className="font-medium text-o5-ink">Google Cloud Secret Manager:</strong> Encrypts and securely injects GitHub and Pulumi API access tokens into build environments at runtime.
-                      </li>
-                    </ul>
-                  </div>
+                    {/* Layer 4 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">04 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Security & Identity
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud IAM:</strong> Facilitates secure <strong className="font-medium text-o5-ink">Service Account Impersonation</strong> (exchanging the GitOps <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">s1yav-cloudbuild-sa</code> identity for short-lived access as <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">sriyav-firebasehost-sa</code> in the target project), removing the need for static API keys.
+                        </li>
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud Secret Manager:</strong> Encrypts and securely injects GitHub and Pulumi API access tokens into build environments at runtime.
+                        </li>
+                      </ul>
+                    </div>
 
-                  {/* Layer 5 */}
-                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
-                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">05 // LAYER</span>
-                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
-                      Artifact Storage
-                    </h3>
-                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
-                      <li>
-                        <strong className="font-medium text-o5-ink">Google Cloud Artifact Registry:</strong> Securely stores built Docker container images before deployment.
-                      </li>
-                    </ul>
-                  </div>
+                    {/* Layer 5 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">05 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Artifact Storage
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Cloud Artifact Registry:</strong> Securely stores built Docker container images before deployment.
+                        </li>
+                      </ul>
+                    </div>
 
-                  {/* Layer 6 */}
-                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
-                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">06 // LAYER</span>
-                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
-                      Hosting & Server Compute (Target Project)
-                    </h3>
-                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
-                      <li>
-                        <strong className="font-medium text-o5-ink">Google Firebase App Hosting:</strong> Next-generation serverless hosting platform that manages the lifecycle of your web app under-the-hood (auto-provisioning Cloud Run instances and routing traffic).
-                      </li>
-                      <li>
-                        <strong className="font-medium text-o5-ink">Express (TypeScript):</strong> The backend framework powering your portfolio website and API routes.
-                      </li>
-                    </ul>
-                  </div>
+                    {/* Layer 6 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">06 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        Hosting & Server Compute (Target Project)
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Google Firebase App Hosting:</strong> Next-generation serverless hosting platform that manages the lifecycle of the web app under-the-hood (auto-provisioning Cloud Run instances and routing traffic).
+                        </li>
+                        <li>
+                          <strong className="font-medium text-o5-ink">Express (TypeScript):</strong> The backend framework powering the portfolio website and API routes.
+                        </li>
+                      </ul>
+                    </div>
 
-                  {/* Layer 7 */}
-                  <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300 md:col-span-2">
-                    <span className="font-mono text-xs text-o5-ink/40 tracking-wider">07 // LAYER</span>
-                    <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
-                      DNS & Custom Domains
-                    </h3>
-                    <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
-                      <li>
-                        <strong className="font-medium text-o5-ink">Cloudflare:</strong> Acts as the DNS Registrar, managing your custom domain (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">sriyav.com</code> and <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">www.sriyav.com</code>) routing records (A, CNAME, and TXT verification records).
-                      </li>
-                    </ul>
+                    {/* Layer 7 */}
+                    <div className="border border-o5-ink/10 p-6 rounded-2xl bg-o5-ink/[0.01] hover:bg-o5-ink/[0.02] transition-colors duration-300 md:col-span-2">
+                      <span className="font-mono text-xs text-o5-ink/40 tracking-wider">07 // LAYER</span>
+                      <h3 className="font-mono text-sm font-semibold uppercase tracking-wider text-o5-ink mt-1 mb-4 pb-2 border-b border-o5-ink/5">
+                        DNS & Custom Domains
+                      </h3>
+                      <ul className="space-y-4 font-sans text-sm text-o5-ink/80 leading-relaxed">
+                        <li>
+                          <strong className="font-medium text-o5-ink">Cloudflare:</strong> Acts as the DNS Registrar, managing the custom domain (<code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">sriyav.com</code> and <code className="font-mono text-xs bg-o5-ink/5 px-1 py-0.5 rounded">www.sriyav.com</code>) routing records (A, CNAME, and TXT verification records).
+                        </li>
+                      </ul>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 

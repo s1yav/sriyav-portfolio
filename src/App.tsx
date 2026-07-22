@@ -449,6 +449,7 @@ const PROJECTS = [
     id: 'google-cloud',
     title: 'GitOps Automation Infrastructure',
     subtitle: 'gitops automation',
+    techKeywords: ['GitHub', 'Pulumi (TypeScript)', 'Google Cloud Build', 'Google Cloud IAM', 'Google Cloud Secret Manager', 'Google Cloud Artifact Registry', 'Google Firebase App Hosting', 'Cloudflare'],
     description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
     githubUrl: 'https://github.com/s1yav/gitops',
     mermaidDiagram: MERMAID_DIAGRAM,
@@ -511,6 +512,7 @@ const PROJECTS = [
     id: 'google-cloud-2',
     title: 'Firebase App Hosting',
     subtitle: 'gitops automation',
+    techKeywords: ['TypeScript', 'Node.js', 'Pulumi (TypeScript)', 'Google Firebase App Hosting', 'Google Cloud Build', 'Google Cloud IAM', 'Google Cloud Secret Manager', 'Google Artifact Registry', 'Mocha / Chai'],
     description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
     githubUrl: 'https://github.com/s1yav/sriyav-firebasehost',
     mermaidDiagram: FIREBASE_APP_HOSTING_MERMAID_DIAGRAM,
@@ -1020,7 +1022,7 @@ const WorkspacePage = ({ onNavigate, darkMode }: { onNavigate: (page: PageType) 
                     </div>
                     {/* Clean text-based subtitle to the heading (no blocks) in one single horizontal line */}
                     <div className="flex flex-row flex-nowrap items-center gap-x-3 text-o5-ink/65 text-[10px] md:text-xs font-mono font-medium uppercase tracking-wider overflow-x-auto scrollbar-none whitespace-nowrap w-full py-0.5 select-none">
-                      {['GitHub', 'Pulumi (TypeScript)', 'Google Cloud Build', 'Google Cloud IAM', 'Google Cloud Secret Manager', 'Google Cloud Artifact Registry', 'Google Firebase App Hosting', 'Cloudflare'].map((techName, idx, arr) => (
+                      {(project.techKeywords || ['GitHub', 'Pulumi (TypeScript)', 'Google Cloud Build', 'Google Cloud IAM', 'Google Cloud Secret Manager', 'Google Cloud Artifact Registry', 'Google Firebase App Hosting', 'Cloudflare']).map((techName, idx, arr) => (
                         <span key={techName} className="flex items-center gap-3 shrink-0">
                           <span>{techName}</span>
                           {idx < arr.length - 1 && <span className="text-o5-ink/20 font-light text-sm font-sans">|</span>}

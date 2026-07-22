@@ -512,7 +512,7 @@ const PROJECTS = [
     title: 'Firebase App Hosting',
     subtitle: 'gitops automation',
     description: 'A production-grade, enterprise-scale hybrid cloud setup orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. Designed for 99.99% availability, zero-downtime blue-green deployments, and immutable environment configurations.',
-    githubUrl: 'https://github.com/s1yav/gitops',
+    githubUrl: 'https://github.com/s1yav/sriyav-firebasehost',
     mermaidDiagram: FIREBASE_APP_HOSTING_MERMAID_DIAGRAM,
     expandedOverview: 'A comprehensive, enterprise-ready hybrid cloud workspace orchestrated entirely via modern infrastructure-as-code and automated GitOps workflows. This system is designed for 99.99% availability, zero-downtime rolling deployments, and fully reproducible environment configurations across multi-region clusters. By managing remote state via Cloud Storage locking and verifying every pull request using advanced security linting, it ensures high reliability and complete operational traceability.',
     deepDiveSections: [
@@ -1287,9 +1287,9 @@ const WorkspacePage = ({ onNavigate, darkMode }: { onNavigate: (page: PageType) 
                         <li>
                           <strong className="font-medium text-o5-ink">GitHub:</strong> Manages the multi-repo codebase:
                           <div className="mt-2 pl-3 border-l border-o5-ink/10 space-y-1 font-mono text-xs text-o5-ink/70">
-                            <div>• sriyav-portfolio <span className="opacity-50">(Application Repository)</span></div>
-                            <div>• sriyav-firebasehost <span className="opacity-50">(Infrastructure Repository)</span></div>
-                            <div>• gitops <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
+                            <div>• <a href="https://github.com/s1yav/sriyav-portfolio" target="_blank" rel="noopener noreferrer" className="hover:underline text-o5-ink">sriyav-portfolio</a> <span className="opacity-50">(Application Repository)</span></div>
+                            <div>• <a href="https://github.com/s1yav/sriyav-firebasehost" target="_blank" rel="noopener noreferrer" className="hover:underline text-o5-ink">sriyav-firebasehost</a> <span className="opacity-50">(Infrastructure Repository)</span></div>
+                            <div>• <a href="https://github.com/s1yav/gitops" target="_blank" rel="noopener noreferrer" className="hover:underline text-o5-ink">gitops</a> <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
                           </div>
                         </li>
                         <li>
@@ -1394,9 +1394,9 @@ const WorkspacePage = ({ onNavigate, darkMode }: { onNavigate: (page: PageType) 
                         <li>
                           <strong className="font-medium text-o5-ink">GitHub:</strong> Manages the multi-repo codebase:
                           <div className="mt-2 pl-3 border-l border-o5-ink/10 space-y-1 font-mono text-xs text-o5-ink/70">
-                            <div>• sriyav-portfolio <span className="opacity-50">(Application Repository)</span></div>
-                            <div>• sriyav-firebasehost <span className="opacity-50">(Infrastructure Repository)</span></div>
-                            <div>• gitops <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
+                            <div>• <a href="https://github.com/s1yav/sriyav-portfolio" target="_blank" rel="noopener noreferrer" className="hover:underline text-o5-ink">sriyav-portfolio</a> <span className="opacity-50">(Application Repository)</span></div>
+                            <div>• <a href="https://github.com/s1yav/sriyav-firebasehost" target="_blank" rel="noopener noreferrer" className="hover:underline text-o5-ink">sriyav-firebasehost</a> <span className="opacity-50">(Infrastructure Repository)</span></div>
+                            <div>• <a href="https://github.com/s1yav/gitops" target="_blank" rel="noopener noreferrer" className="hover:underline text-o5-ink">gitops</a> <span className="opacity-50">(Bootstrap Connections Repository)</span></div>
                           </div>
                         </li>
                         <li>
